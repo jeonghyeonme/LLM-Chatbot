@@ -39,3 +39,6 @@ Thumbs.db
 *.log
 data/raw/
 data/processed/
+
+# Lecture Materials
+docs/*.pdf

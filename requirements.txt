@@ -1,5 +1,9 @@
-streamlit
 openai
+langchain
+langchain-openai
+langgraph
+langsmith
+streamlit
 python-dotenv
-streamlit-mic-recorder
-yfinance
+chromadb
+tiktoken

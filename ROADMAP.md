@@ -1,37 +1,42 @@
-# 🗺️ Project Roadmap: Dual-Persona Counseling Chatbot
+# 🗺️ Project Roadmap: AI 듀얼 카운슬링 플랫폼
 
-## 📊 프로젝트 현황 (Last Updated: 2026-04-28)
-- **현재 상태**: 2단계 (MVP 개발) 진입 및 UI 프로토타이핑 완료
+## 📊 프로젝트 현황 (Last Updated: 2026-04-29)
+- **현재 상태**: **Phase 2 (LangGraph Implementation)** 진입
 - **최근 주요 변경사항**:
-    - Streamlit 기반의 엘리아/루나 듀얼 UI 프로토타입 구현 (`src/app.py`)
-    - 개발 환경 구축 완료 (`requirements.txt` 및 필수 라이브러리 설치)
-    - 페르소나별 시각적 차별화 및 병렬 답변 구조 설계
+    - LangChain/LangGraph 기반 멀티 에이전트 아키텍처로 확장 (`docs/02`)
+    - RAG(Retrieval-Augmented Generation) 통합 전략 수립
+    - 페르소나 저장소(Persona Registry) 개념 도입
 
 ---
 
-## 1단계: 기획 및 설계
-- [x] 핵심 컨셉 정의 (이성 vs 감성)
-- [x] 페르소나 상세 설계 (엘리아 & 루나)
-- [x] 기술 사양 확정 (GPT-4o, Function Calling, Whisper)
-- [x] 기획 발표 자료 준비 및 피드백 반영
+## Phase 1: Planning & Architecture ── ✅ 완료
+- [x] **멀티 에이전트 설계**: LangGraph를 이용한 상태 기반 워크플로우 설계
+- [x] **RAG 전략 수립**: 외부 전문 지식 데이터셋 및 Vector DB 선정
+- [x] **페르소나 프레임워크**: 엘리아/루나 외 확장 페르소나 페어 정의
+- [x] **기획 문서 고도화**: v2.0 기술 사양서 및 README 최신화
 
-## 2단계: MVP (Minimum Viable Product) 개발
-- [x] 개발 환경 구축 (Python, OpenAI API 연동 준비)
-- [ ] 기본 오케스트레이터 구현: 사용자 입력을 두 페르소나에게 전달
-- [ ] 병렬 응답 생성 로직 구현
-- [x] 단순 UI (Streamlit 웹 페이지 프로토타입) 개발
+## Phase 2: Core Engine Development (LangGraph) ── 🏗️ 진행 중
+- [ ] **State Schema 정의**: 에이전트 간 공유되는 대화 상태 및 컨텍스트 구조화
+- [ ] **LangGraph Workflow 구현**: Analyzer -> Agent -> Synthesizer 노드 구성
+- [ ] **Query Analyzer 구현**: 질문 의도에 따른 페르소나 매칭 로직 개발
+- [ ] **Parallel Agent Nodes**: 엘리아와 루나 에이전트의 병렬 실행 환경 구축
 
-## 3단계: 상호작용 고도화 (Core Feature)
-- [ ] Function Calling을 이용한 페르소나 간 대화 로직 구현
-- [ ] 대화 중재 알고리즘 최적화 (언제 토론을 시작할 것인가?)
-- [ ] 페르소나별 답변 스타일 가이드라인(Prompt Engineering) 정교화
+## Phase 3: RAG & Knowledge Integration
+- [ ] **Vector Database 구축**: 상담 가이드 및 도메인 지식 문서 임베딩 (Chroma/Pinecone)
+- [ ] **Retriever Node 구현**: 질문 인텐트에 부합하는 외부 데이터 검색 로직 연동
+- [ ] **Context-Aware Prompting**: 검색된 정보를 에이전트 답변 생성에 주입
 
-## 4단계: 멀티모달 및 UX 강화
-- [ ] OpenAI Whisper API 연동 (음성 입력 지원)
-- [ ] 대화 흐름 시각화 (두 페르소나의 상호작용을 보여주는 UI 애니메이션)
-- [ ] 고민 유형별 특화 조언 DB 구축 (RAG 검토)
+## Phase 4: Interaction & Internal Debate
+- [ ] **Internal Debate 엔진**: `Function Calling`을 통한 에이전트 간 '내부 토론' 트리거 구현
+- [ ] **Cross-Review 로직**: 상대방의 답변 초안을 읽고 보완 의견을 제시하는 프로세스 최적화
+- [ ] **Synthesizer 고도화**: 개별 답변과 토론 내용을 조화롭게 결합하는 합성 모듈
 
-## 5단계: 검증 및 배포
-- [ ] 페르소나 일관성 테스트 (Turing Test 스타일의 내부 검증)
-- [ ] 사용자 피드백 수집 및 모델 튜닝
-- [ ] 클라우드 환경 배포
+## Phase 5: Future Backlog (Persona Expansion)
+- [ ] **Persona Registry 고도화**: 도메인별(취업, 재테크 등) 특화 페어 추가
+- [ ] **Dynamic Pair Matching**: 질문 분석 결과에 따라 자동으로 페르소나 페어 전환
+- [ ] **Multi-Pair UI**: 사용자가 직접 상담 전문가 페어를 선택하는 인터페이스
+
+## Phase 6: Validation & Optimization
+- [ ] **LangSmith 추적**: 대화 흐름 분석 및 프롬프트 품질 최적화
+- [ ] **시나리오 테스트**: 카테고리별 답변 정확도 및 페르소나 일관성 평가
+- [ ] **최종 배포**: 클라우드 환경 배포 및 안정화

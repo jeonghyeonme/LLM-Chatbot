@@ -2,86 +2,214 @@ import streamlit as st
 import time
 
 # 페이지 설정
-st.set_page_config(page_title="엘리아 & 루나: 듀얼 상담소", page_icon="✨")
+st.set_page_config(page_title="엘리아 & 루나: 듀얼 상담소", page_icon="💬", layout="centered")
 
-# 스타일 커스터마이징 (CSS)
+# 다크 모드 및 레드 포인트 UI 스타일 적용
 st.markdown("""
     <style>
-    .stChatMessage { border-radius: 15px; margin-bottom: 10px; }
-    .persona-label { font-weight: bold; font-size: 0.8rem; margin-bottom: 5px; }
-    .elia-label { color: #1E88E5; }
-    .luna-label { color: #EC407A; }
+    /* 전체 배경색 - Streamlit 다크 모드 배경색 */
+    .stApp {
+        background-color: #0E1117;
+        color: #FAFAFA;
+    }
+    
+    /* 채팅 컨테이너 */
+    .main .block-container {
+        padding-top: 2rem;
+        max-width: 700px;
+    }
+
+    /* 공통 말풍선 스타일 */
+    .chat-bubble {
+        padding: 10px 14px;
+        border-radius: 18px;
+        margin-bottom: 10px;
+        max-width: 85%;
+        font-size: 15px;
+        line-height: 1.5;
+        position: relative;
+        display: inline-block;
+    }
+
+    /* 사용자 말풍선 (우측, 테마 포인트 레드) */
+    .user-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+    }
+    .user-bubble {
+        background-color: #FF4B4B;
+        color: #FFFFFF;
+        border-bottom-right-radius: 2px;
+        box-shadow: 0 2px 8px rgba(255, 75, 75, 0.3);
+    }
+
+    /* 페르소나 말풍선 (좌측, 다크 그레이) */
+    .persona-container {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 15px;
+    }
+    .persona-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background-color: #262730;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-right: 10px;
+        flex-shrink: 0;
+        border: 1px solid #444;
+    }
+    .persona-content {
+        display: flex;
+        flex-direction: column;
+    }
+    .persona-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #B0B0B0;
+        margin-bottom: 4px;
+    }
+    .persona-bubble {
+        background-color: #262730;
+        color: #FAFAFA;
+        border-bottom-left-radius: 2px;
+        border: 1px solid #3E3F4B;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* 시스템 메시지 */
+    .system-container {
+        display: center;
+        justify-content: center;
+        text-align: center;
+        margin: 25px 0;
+    }
+    .system-bubble {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #888;
+        font-size: 12px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 스트림릿 기본 요소 숨기기 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stChatMessage {display: none;}
     </style>
     """, unsafe_allow_html=True)
+
+# 메시지 출력 함수
+def display_message(role, content, persona=None, avatar=None):
+    if role == "user":
+        st.markdown(f"""
+            <div class="user-container">
+                <div class="chat-bubble user-bubble">{content}</div>
+            </div>
+            """, unsafe_allow_html=True)
+    elif role == "assistant":
+        st.markdown(f"""
+            <div class="persona-container">
+                <div class="persona-avatar">{avatar}</div>
+                <div class="persona-content">
+                    <div class="persona-name">{persona}</div>
+                    <div class="chat-bubble persona-bubble">{content}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    elif role == "system":
+        st.markdown(f"""
+            <div class="system-container">
+                <div class="system-bubble">{content}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # 세션 상태 초기화
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 사이드바 구성
+# 앱 제목 (다크 모드에 맞는 화이트 버블 스타일)
+st.markdown("""
+    <div style='display: flex; justify-content: center; margin-bottom: 30px;'>
+        <div style='
+            background-color: rgba(255, 255, 255, 0.1); 
+            color: #FFFFFF; 
+            padding: 12px 28px; 
+            border-radius: 25px; 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            font-size: 1.4rem; 
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        '>
+            ✨ 엘리아 & 루나 듀얼 상담소
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 대화 기록 표시
+for msg in st.session_state.messages:
+    display_message(msg["role"], msg["content"], msg.get("persona"), msg.get("avatar"))
+
+# 사용자 입력
+if prompt := st.chat_input("고민을 입력해 주세요..."):
+    # 1. 사용자 메시지 추가 및 표시
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    display_message("user", prompt)
+
+    # 2. 답변 생성 시뮬레이션
+    with st.spinner("두 분이 대화 중입니다..."):
+        time.sleep(1.5)
+
+        # 예시 데이터 (실제 연동 시 이 부분을 LLM 결과로 대체)
+        responses = [
+            {
+                "role": "assistant",
+                "persona": "엘리아",
+                "avatar": "🤖",
+                "content": f"'{prompt}'에 대해 이성적으로 분석해 보았습니다. 우선 가장 큰 원인이 무엇인지 객관적으로 파악하는 단계가 필요해 보입니다."
+            },
+            {
+                "role": "assistant",
+                "persona": "루나",
+                "avatar": "🌸",
+                "content": f"엘리아 말도 맞지만, 지금은 그 마음을 먼저 다독여주는 게 중요할 것 같아요. {prompt} 때문에 얼마나 속상하셨을지 제가 다 느껴지네요."
+            },
+            {
+                "role": "system",
+                "content": "엘리아와 루나가 의견을 나누기 시작합니다"
+            },
+            {
+                "role": "assistant",
+                "persona": "루나",
+                "avatar": "🌸",
+                "content": "엘리아, 사용자님께는 지금 당장의 해결책보다 따뜻한 응원이 더 큰 힘이 될 거예요."
+            },
+            {
+                "role": "assistant",
+                "persona": "엘리아",
+                "avatar": "🤖",
+                "content": "루나의 의견에 동의합니다. 정서적 지지가 충분히 이루어진 뒤에 현실적인 대안을 함께 모색해 보는 것이 좋겠군요."
+            }
+        ]
+
+        # 3. 답변을 순차적으로 표시 및 저장
+        for res in responses:
+            time.sleep(0.8) # 실제 카톡처럼 시간차를 두고 등장
+            display_message(res["role"], res["content"], res.get("persona"), res.get("avatar"))
+            st.session_state.messages.append(res)
+        
+    st.rerun()
+
+# 사이드바 (기능 유지)
 with st.sidebar:
     st.title("⚙️ 설정")
-    st.info("이성적인 엘리아와 감성적인 루나의 조언을 동시에 들어보세요.")
     if st.button("대화 기록 초기화"):
         st.session_state.messages = []
         st.rerun()
-
-st.title("✨ 엘리아 & 루나의 상담소")
-st.caption("고민을 말씀해 주세요. 두 페르소나가 함께 답해 드립니다.")
-
-# 대화 기록 표시
-for message in st.session_state.messages:
-    with st.chat_message(message["role"], avatar=message.get("avatar")):
-        if "persona" in message:
-            label_class = "elia-label" if message["persona"] == "엘리아" else "luna-label"
-            st.markdown(f'<div class="persona-label {label_class}">{message["persona"]}</div>', unsafe_allow_html=True)
-        st.markdown(message["content"])
-
-# 사용자 입력
-if prompt := st.chat_input("어떤 고민이 있으신가요?"):
-    # 1. 사용자 메시지 추가
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # 2. 답변 생성 시뮬레이션 (실제 구현 시 LLM 호출 로직으로 교체)
-    with st.spinner("엘리아와 루나가 생각 중입니다..."):
-        time.sleep(1.5) # 생각하는 척
-
-        # 답변 데이터 예시
-        elia_response = f"엘리아: '{prompt}'에 대한 이성적인 분석입니다. 현재 상황을 데이터로 파악하고 단계별 해결책을 고려해야 합니다."
-        luna_response = f"루나: '{prompt}' 때문에 마음이 많이 힘드셨죠? 그 마음 제가 다 이해해요. 조금은 쉬어가도 괜찮아요."
-        interaction = "루나: 엘리아, 가끔은 분석보다 위로가 더 힘이 될 때가 있어요.\n엘리아: 동의합니다. 하지만 실질적인 변화가 동반되어야 감정도 안정될 수 있죠."
-
-    # 3. 답변 출력 (병렬 구조)
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        with st.chat_message("assistant", avatar="🤖"):
-            st.markdown('<div class="persona-label elia-label">엘리아</div>', unsafe_allow_html=True)
-            st.write(elia_response)
-            st.session_state.messages.append({
-                "role": "assistant", 
-                "persona": "엘리아", 
-                "content": elia_response,
-                "avatar": "🤖"
-            })
-
-    with col2:
-        with st.chat_message("assistant", avatar="🌸"):
-            st.markdown('<div class="persona-label luna-label">루나</div>', unsafe_allow_html=True)
-            st.write(luna_response)
-            st.session_state.messages.append({
-                "role": "assistant", 
-                "persona": "루나", 
-                "content": luna_response,
-                "avatar": "🌸"
-            })
-
-    # 4. 페르소나 간 상호작용 표시
-    with st.expander("💬 엘리아와 루나의 대화 엿보기"):
-        st.write(interaction)
-        st.session_state.messages.append({
-            "role": "system", 
-            "content": f"**[페르소나 간 대화]**\n{interaction}"
-        })

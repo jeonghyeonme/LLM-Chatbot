@@ -1,57 +1,53 @@
-# 🛠️ 기술 사양 및 시스템 설계 (v2.0: LangGraph 기반)
+# 🛠️ 기술 사양 및 시스템 설계 (v3.0: 인하-봇)
 
-본 문서는 LangGraph와 RAG(Retrieval-Augmented Generation)를 활용하여 확장성과 지능을 극대화한 듀얼 에이전트 시스템 설계를 정의합니다.
+본 문서는 인하공업전문대학 신입생 도우미 챗봇 '인덕이'의 기술적 구현 방안을 정의합니다.
 
-## 1. 아키텍처 개요 (LangGraph Flow)
+## 1. 아키텍처 개요
 
-시스템은 상태(State) 중심의 그래프 구조로 동작하며, 각 노드는 독립적인 에이전트 또는 기능을 수행합니다.
+시스템은 React 프론트엔드와 FastAPI 백엔드로 구성된 모던 웹 애플리케이션 아키텍처를 따릅니다.
 
-### 1.1. State 정의
-- `query`: 사용자 질문
-- `analysis`: 질문 성격 및 주제 분석 결과
-- `context`: RAG를 통해 검색된 외부 지식 데이터
-- `agent_outputs`: 각 에이전트의 답변 및 상호작용 기록
-- `final_response`: 사용자에게 전달될 최종 합성 답변
+### 1.1. Frontend (UI/UX)
+- **Framework**: React (TypeScript)
+- **Build Tool**: Vite
+- **Styling**: Vanilla CSS or Tailwind CSS
+- **State Management**: React Hooks (useState, useEffect)
+- **Key Features**: 
+    - 웰컴 인터렉션 카드
+    - 퀵 메뉴 버튼 (Quick Replies)
+    - 채팅 버블 인터페이스
 
-### 1.2. Graph Nodes
-1.  **Analyzer Node**: 질문의 인텐트 분석 및 적합한 페르소나 페어(Pair) 매칭.
-2.  **Retriever Node (RAG)**: 질문과 관련된 외부 데이터(경제 지표, 상담 사례 등) 검색.
-3.  **Agent Nodes (Elia, Luna, etc.)**: 매칭된 페르소나들이 병렬로 답변 생성 및 상호작용.
-4.  **Orchestrator Node**: 에이전트 간 토론이 더 필요한지 판단 (Conditional Edge).
-5.  **Synthesizer Node**: 모든 출력을 결합하여 최종 메시지 생성.
+### 1.2. Backend (API)
+- **Framework**: FastAPI (Python)
+- **LLM**: OpenAI GPT-4o-mini (가벼운 대화 및 인텐트 분류용)
+- **Data Storage**: JSON-based Static Data (학사일정, 강의실 정보 등)
+- **API Endpoints**:
+    - `POST /chat`: 사용자 메시지 처리 및 답변 생성
+    - `GET /info/{category}`: 카테고리별 정적 정보 조회
 
-## 2. 시스템 확장성 (Extensibility)
+## 2. 핵심 기능 구현 방안
 
-### 2.1. Persona Registry (향후 확장 요소)
-- **현재**: '엘리아(이성) & 루나(감성)' 핵심 페어에 집중하여 구현.
-- **확장 방향**: 도메인별 페르소나 페어(Career, Economy 등)를 등록하고 매칭하는 Registry 구조를 아키텍처 상으로 지원.
+### 2.1. 인텐트 분류 및 퀵 응답
+- 사용자가 버튼을 클릭하거나 특정 키워드를 입력할 경우, LLM을 거치지 않고 사전에 정의된 응답(Static Response)을 즉시 반환하여 응답 속도 최적화.
 
-### 2.2. Retrieval-Augmented Generation (RAG)
-- **Vector DB**: Pinecone 또는 Chroma 활용.
-- **Source**: 상담 심리 논문, 경제 트렌드 리포트, 커리어 가이드북 등.
-- **동작**: 에이전트가 답변 생성 시 자신의 페르소나와 부합하는 검색 결과를 참고하여 전문성 강화.
+### 2.2. 컴퓨터정보공학과 맞춤형 데이터
+- 4호관 401호(학과 사무실), 실습실 위치 등 학과 전용 데이터를 별도로 관리하여 정확한 가이드 제공.
 
-## 3. 데이터 구조 및 인터페이스
+## 3. 데이터 구조 (Example)
 
-### 3.1. Node Interaction Schema
 ```json
 {
-  "graph_state": {
-    "pair_id": "DEFAULT_ELIA_LUNA",
-    "retrieved_docs": ["..."],
-    "interactions": [
-      {"from": "Elia", "to": "Luna", "action": "debate", "content": "..."}
-    ]
+  "cafeteria": {
+    "location": "학생회관 1층",
+    "hours": "11:30 ~ 13:30",
+    "menu_today": "A코스: 돈까스, B코스: 김치찌개"
+  },
+  "department_office": {
+    "location": "4호관 401호",
+    "contact": "032-870-2310"
   }
 }
 ```
 
-## 4. 프롬프트 엔지니어링 (LangChain Integration)
-- **LangChain Expression Language (LCEL)**를 사용하여 프롬프트 체인을 구성.
-- **Dynamic Prompting**: 페르소나 저장소에서 가져온 설정값이 런타임에 시스템 프롬프트에 주입됨.
-
-## 5. 핵심 구현 도구
-- **Framework**: LangChain, LangGraph (Graph-based State Management)
-- **Vector Search**: LangChain Retrieval QA
-- **Monitoring**: LangSmith (상호작용 추적 및 디버깅)
-
+## 4. 보안 및 배포
+- **Environment Variables**: API Key 등 민감 정보는 `.env`로 관리.
+- **Deployment**: Vercel (Frontend) & Render/Railway (Backend) 추천.

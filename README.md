@@ -1,44 +1,35 @@
-# 🎭 AI 듀얼 카운슬링 플랫폼 (Multi-Persona & RAG)
+# 🐥 인하공업전문대학 신입생 도우미 '인덕이' (Inha-Bot)
 
-> **"LangGraph 기반의 멀티 에이전트 오케스트레이션으로 구현하는 입체적 상담 경험"**  
-본 프로젝트는 사용자의 고민에 따라 최적의 페르소나 페어를 매칭하고, RAG(검색 증강 생성)를 통해 전문적인 조언을 제공하는 지능형 상담 플랫폼입니다.
+> **"신입생의 스마트한 대학 생활을 위한 인공지능 가이드"**  
+본 프로젝트는 인하공업전문대학 컴퓨터정보공학과 신입생들을 위해 학사 일정, 학생식당 메뉴, 강의실 위치 등 필수 정보를 친근하게 제공하는 지능형 챗봇 플랫폼입니다.
 
 ## 🌟 주요 특징
-- **LangGraph Orchestration**: 상태 기반 그래프 구조를 통한 정교한 에이전트 간 토론 및 협업.
-- **Persona Registry**: 고민 주제(커리어, 경제, 심리 등)에 특화된 다양한 페르소나 조합 제공.
-- **RAG Integration**: 외부 전문 지식(상담 사례, 시장 데이터 등)을 참고한 고품질 조언.
-- **입체적 분석**: 이성적 분석(The Architect)과 정서적 공감(The Healer)의 조화.
+- **Mascot-Driven UI**: 학교 마스코트 '인덕이'를 활용한 친근한 인터랙션.
+- **Quick Access**: 복잡한 메뉴 검색 없이 퀵 버튼을 통한 즉각적인 정보 제공.
+- **Department Specific**: 컴퓨터정보공학과 신입생을 위한 전용 강의실 및 학과 사무실 가이드.
+- **Modern Web Stack**: React와 FastAPI를 활용한 빠르고 부드러운 사용자 경험.
 
-## 🛠️ 기술 스택 (Tech Stack)
-- **Framework**: LangChain, LangGraph (State Management)
-- **LLM**: OpenAI `gpt-4o`
-- **Vector DB**: Chroma / Pinecone (RAG 구현)
-- **Monitoring**: LangSmith (Interaction Tracking)
-- **Interface**: Streamlit
+## 🎨 Design Vision (UI/UX)
+- **Primary Color**: Inha Blue (`#004680`) - 신뢰와 전문성.
+- **Secondary Color**: Inha Green (`#00843D`) - 편안함과 안정감.
+- **Concept**: 모바일 앱과 같은 직관적인 웹뷰 UI.
 
 ## 📂 프로젝트 구조
-- `src/`: 듀얼 페르소나 엔진 및 LangGraph 워크플로우 로직
+- `frontend/`: React (TypeScript) 기반 사용자 인터페이스 (예정)
+- `backend/`: FastAPI 기반 챗봇 로직 및 API 서버 (예정)
 - `docs/`: 기획 및 설계 상세 문서
-  - [01. 페르소나 상세 설계](./docs/01_persona_design.md)
-  - [02. 기술 사양서(v2.0)](./docs/02_technical_specification.md)
-  - [03. 기획 발표 개요](./docs/03_presentation_outline.md)
-- `data/`: RAG를 위한 전문 지식 데이터셋 및 프롬프트 템플릿
-- `requirements.txt`: 프로젝트 의존성 관리
+  - [01. 페르소나 설계 (인덕이)](./docs/01_persona_design.md)
+  - [02. 기술 사양서](./docs/02_technical_specification.md)
+- `data/`: 학사 정보 및 학과 안내 데이터셋
 
-## 🚀 시작하기
+## 🚀 시작하기 (준비 중)
 ```bash
-# 저장소 클론
-git clone https://github.com/your-repo/LLM-Chatbot.git
-
-# 의존성 설치
-pip install -r requirements.txt
-
-# 환경 변수 설정 (.env 파일 생성)
-# OPENAI_API_KEY=your_api_key_here
+# 프로젝트 설치 및 실행 방법은 프론트엔드/백엔드 구성 후 업데이트 예정입니다.
 ```
 
 ## 📅 현재 진행 상황
-- [x] LangGraph 기반 멀티 에이전트 아키텍처 설계
-- [x] RAG 통합 및 페르소나 확장 전략 수립
-- [ ] LangGraph 워크플로우 엔진 구현 (In Progress)
-- [ ] Vector DB 구축 및 도메인 지식 임베딩
+- [x] 프로젝트 컨셉 전환 (더블 페르소나 -> 신입생 도우미)
+- [x] UI/UX 기획 및 시나리오 정의
+- [ ] React 프로젝트 초기화 (Next Step)
+- [ ] 챗봇 기본 UI 구현
+- [ ] 학사 정보 연동 API 개발

@@ -1,9 +1,0 @@
-openai
-langchain
-langchain-openai
-langgraph
-langsmith
-streamlit
-python-dotenv
-chromadb
-tiktoken

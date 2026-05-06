@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-dotenv
+requests
+beautifulsoup4
+langchain
+langchain-openai
+chromadb
+openai
+pytest
+httpx

@@ -15,11 +15,13 @@
 - **Concept**: 모바일 앱과 같은 직관적인 웹뷰 UI.
 
 ## 📂 프로젝트 구조
-- `frontend/`: React (TypeScript) 기반 사용자 인터페이스 (예정)
-- `backend/`: FastAPI 기반 챗봇 로직 및 API 서버 (예정)
-- `docs/`: 기획 및 설계 상세 문서
-  - [01. 페르소나 설계 (인덕이)](./docs/01_persona_design.md)
-  - [02. 기술 사양서](./docs/02_technical_specification.md)
+- `frontend/`: React (TypeScript) 기반 사용자 인터페이스
+- `backend/`: FastAPI 기반 챗봇 로직 및 API 서버
+- `assets/`: 기획 문서 및 디자인 리소스
+  - `assets/docs/`: 기획 및 설계 상세 문서
+    - [01. 페르소나 설계 (인덕이)](./assets/docs/01_persona_design.md)
+    - [02. 기술 사양서](./assets/docs/02_technical_specification.md)
+  - `assets/design/`: SVG 디자인 원본 파일 (Desktop/Mobile)
 - `data/`: 학사 정보 및 학과 안내 데이터셋
 
 ## 🚀 시작하기 (준비 중)

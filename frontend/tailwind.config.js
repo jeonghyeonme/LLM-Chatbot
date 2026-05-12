@@ -7,10 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        'inha-blue': '#004680',
-        'inha-green': '#00843D',
-        'light-gray': '#F1F5F9',
+        'inha-blue': '#004898',
+        'inha-bg': '#F7F9FF',
+        'inha-border': '#E5E8EE',
+        'inha-border-input': '#C3C6D3',
+        'inha-text-main': '#424751',
+        'inha-text-sub': '#5C5F60',
+        'inha-pill-bg': '#ACC7FF',
       },
+      borderRadius: {
+        'inha-card': '12px',
+        'inha-input': '24.5px',
+        'inha-pill': '21px',
+      },
+      boxShadow: {
+        'inha-card': '0 4px 6px rgba(0, 0, 0, 0.05)',
+      }
     },
   },
   plugins: [],

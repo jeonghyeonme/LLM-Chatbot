@@ -46,7 +46,7 @@ export default function ChatPage() {
     { label: '📅 학사일정', path: '/calendar' },
     { label: '🗺️ 캠퍼스맵', path: '/map' },
     { label: '📢 공지사항', path: '/calendar' },
-    { label: '🍱 식단안내', path: '#' },
+    { label: '🍱 식단안내', path: '/cafeteria' },
     { label: '💰 장학금', path: '#' },
   ]
 

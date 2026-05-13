@@ -1,73 +1,38 @@
-# React + TypeScript + Vite
+# 📱 인하-봇 프론트엔드 (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19와 TypeScript, Vite를 사용한 인하-봇의 사용자 인터페이스입니다.
 
-Currently, two official plugins are available:
+## 🛠️ 시작하기
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### 권장 환경
+- Node.js 20.x 이상
+- npm 10.x 이상
 
-## React Compiler
+### 설치 및 실행
+```bash
+# 의존성 설치
+npm install
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 로컬 개발 서버 실행
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 주요 스크립트
+- `npm run dev`: Vite 개발 서버 실행 (HMR 지원)
+- `npm run build`: 프로덕션 빌드 생성
+- `npm run lint`: ESLint를 통한 코드 린팅
+- `npm run preview`: 빌드된 결과물 미리보기
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 📁 디렉토리 구조
+- `src/components`: 재사용 가능한 UI 컴포넌트
+- `src/pages`: 각 라우트별 페이지 컴포넌트
+- `src/assets`: 이미지, SVG 등 정적 자산
+- `public/`: 정적 파일 (파비콘, 아이콘 등)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🎨 스타일 가이드
+- **Tailwind CSS**: 유틸리티 우선 CSS 프레임워크를 사용합니다.
+- **Icon**: `lucide-react`를 기본 아이콘 라이브러리로 사용합니다.
+
+## 🔗 관련 문서
+- [프로젝트 전체 가이드라인](../GEMINI.md)
+- [기여 방법](../CONTRIBUTING.md)

@@ -31,19 +31,24 @@
     - **저장**: Supabase `facilities` 테이블 (장소명, 위치, 상세안내, 연락처)
 
 ### 2. 챗봇 지능 및 백엔드 고도화 (AI/API)
-- [ ] **[A-1] Gemini 라우팅 로직**
+- [ ] **[A-1] RESTful API 엔드포인트 상세 설계**
+    - **Data API**: DB 테이블별 CRUD 및 조회 엔드포인트 분리 (`/api/meals`, `/api/schedules`, `/api/facilities`)
+    - **Chat API**: `POST /api/chat` (인텐트 분석 및 답변 생성)
+    - **Streaming**: 사용자 경험 개선을 위한 SSE(Server-Sent Events) 스트리밍 답변 구조 설계
+    - **AI Integration**: Gemini 1.5 Flash API 연동 및 Function Calling 활용 설계
+- [ ] **[A-2] Gemini 라우팅 로직**
     - **핵심**: 질문 분석을 통한 '정적 정보 조회'와 'LLM 답변 생성' 분기
     - **기술**: `Gemini 1.5 Flash` (Function Calling 또는 분류 프롬프트)
     - **목표**: 답변 정확도 향상 및 불필요한 AI 토큰 소모 방지
-- [ ] **[A-2] 인덕이 페르소나 프롬프트**
+- [ ] **[A-3] 인덕이 페르소나 프롬프트**
     - **핵심**: 마스코트 '인덕이'의 말투(친절함, '덕' 접미사) 및 학교 지식 주입
     - **기술**: `LangChain` PromptTemplate + SystemMessage 구성
     - **목표**: 일관된 브랜드 보이스(Brand Voice) 유지
-- [ ] **[A-3] 서버리스 배포 최적화**
+- [ ] **[A-4] 서버리스 배포 최적화**
     - **핵심**: Vercel Serverless Functions 제약(Cold Start, 시간 제한) 대응
     - **기술**: FastAPI 엔트리포인트 구성 및 가벼운 의존성 관리
     - **목표**: Vercel 환경에서의 안정적인 API 구동
-- [ ] **[A-4] 대화 문맥 유지**
+- [ ] **[A-5] 대화 문맥 유지**
     - **핵심**: 이전 질문 내용을 기억하여 연속적인 대화 흐름 지원
     - **기술**: `LangChain` ConversationBufferMemory + Supabase 세션 저장
     - **목표**: 지시어(그거, 거기) 포함 질문 처리 가능

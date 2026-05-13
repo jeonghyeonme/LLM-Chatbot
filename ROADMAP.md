@@ -6,26 +6,22 @@
 - **정형 데이터 (JSON/DB)**: 식단표, 학사일정 등은 크롤링 후 Supabase DB 또는 JSON에 저장.
 - **비정형 데이터 (Vector DB)**: 공지사항, FAQ 등은 **Supabase pgvector**에 임베딩하여 적재.
 - **LLM 엔진**: **Gemini 1.5 Flash**를 활용하여 비용 0원 유지 및 빠른 응답 생성. (더 적합한 모델 있으면 변경 가능)
-- **오케스트레이션**: Vercel Functions 기반의 FastAPI 인텐트 라우팅.
+- **데이터 수집 (Crawler)**: **GitHub Actions** + `BeautifulSoup` (주기적 스케줄링 및 Supabase 직접 적재)
+- **정형 데이터 (JSON/DB)**: 식단표, 학사일정 등은 크롤링 후 Supabase DB에 저장.
 
 ---
 
 ## 📅 통합 개발 로드맵 (Checklist & Guide)
 
 ### 1. 데이터 수집 및 지식 베이스 (Data)
-- [ ] **[D-1] 식단 정보 자동화**
-    - **대상**: 학교 홈페이지 학생식당 메뉴 페이지
-    - **기술**: `BeautifulSoup` + `requests` 활용 (서버리스 최적화)
-    - **저장**: Supabase `meals` 테이블 (날짜, 식당구분, 메뉴내용)
-- [ ] **[D-2] 학사 일정 자동화**
-    - **대상**: 학교 홈페이지 학사일정 게시판
-    - **기술**: 연간/월간 데이터 크롤링 및 날짜 포맷 표준화 (YYYY-MM-DD)
-    - **저장**: Supabase `schedules` 테이블 (시작일, 종료일, 일정명)
-- [ ] **[D-3] Supabase 벡터 구축**
-    - **대상**: 학교 홈페이지 일반공지 및 학과 공지사항 게시판
-    - **기술**: `LangChain` (TextSplitter) + `Supabase pgvector`
-    - **목표**: 비정형 텍스트를 벡터화하여 시맨틱 검색 지원
-- [ ] **[D-4] 시설 데이터 구축**
+- [ ] **[D-1] GitHub Actions 기반 크롤링 자동화**
+    - **대상**: 학교 홈페이지 학생식당 및 학사일정 페이지
+    - **기술**: Python (`requests`, `bs4`) + GitHub Actions Workflow 스케줄링
+    - **저장**: Supabase API를 통한 `meals`, `schedules` 테이블 직접 적재
+- [ ] **[D-2] 공지사항 벡터화 파이프라인**
+    - **대상**: 일반공지 및 학과 게시판
+    - **기술**: GitHub Actions를 통한 주기적 임베딩 및 Supabase pgvector 적재
+- [ ] **[D-3] 시설 데이터 정적 구축**
     - **대상**: 4호관 실습실, 학과 사무실, 학생 편의시설 위치 정보
     - **기술**: 정적 데이터 수집 및 JSON/CSV 변환 로직
     - **저장**: Supabase `facilities` 테이블 (장소명, 위치, 상세안내, 연락처)

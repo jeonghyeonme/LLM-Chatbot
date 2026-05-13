@@ -25,6 +25,40 @@
 - **Deployment**: Vercel (Full Stack)
 - **App Experience**: PWA (Progressive Web App) 지원
 
+## 📂 프로젝트 구조
+
+```text
+induck-it/
+├── .github/              # PR 템플릿 및 GitHub 설정
+├── assets/               # 기획 문서 및 디자인 리소스 (SVG)
+├── backend/              # FastAPI 서버리스 백엔드
+│   ├── api/              # API 엔드포인트 (Vercel Functions)
+│   ├── app/              # FastAPI 메인 로직
+│   ├── core/             # 공통 설정 및 로깅
+│   ├── schemas/          # Pydantic 모델 (Request/Response)
+│   ├── services/         # 크롤러 및 AI 비즈니스 로직
+│   └── requirements.txt  # 백엔드 의존성
+└── frontend/             # React 프론트엔드
+    ├── src/
+    │   ├── assets/       # 컴포넌트용 에셋
+    │   ├── components/   # 재사용 가능한 UI 컴포넌트
+    │   └── pages/        # 라우트별 페이지 컴포넌트
+    └── package.json      # 프론트엔드 의존성
+```
+
+## 📊 데이터베이스 스키마 (Supabase)
+
+운영 비용 0원을 위한 효율적인 테이블 설계입니다. (*개발 진행 상황에 따라 구조가 변경될 수 있습니다.*)
+
+- **`meals`**: 학생식당 메뉴 데이터
+  - `id`, `date`, `course_type` (A/B), `menu_content`, `created_at`
+- **`schedules`**: 학사 일정 데이터
+  - `id`, `title`, `start_date`, `end_date`, `is_holiday`, `created_at`
+- **`facilities`**: 캠퍼스 시설 및 강의실 데이터
+  - `id`, `name`, `building`, `room_number`, `description`, `phone`
+- **`knowledge_vectors` (pgvector)**: 공지사항 및 FAQ 벡터 데이터
+  - `id`, `content`, `embedding` (vector), `metadata` (link, category)
+
 ## 🚀 시작하기
 
 ### 🛠️ 개발 환경 설정

@@ -1,4 +1,4 @@
-# 🐥 인하공업전문대학 신입생 도우미 '인덕이' (inhabot)
+# 🐥 인하공업전문대학 신입생 도우미 '인덕이' (induck-it)
 
 > **"신입생의 스마트한 대학 생활을 위한 인공지능 가이드"**  
 본 프로젝트는 인하공업전문대학 컴퓨터정보공학과 신입생들을 위해 학사 일정, 학생식당 메뉴, 강의실 위치 등 필수 정보를 친근하게 제공하는 지능형 챗봇 플랫폼입니다.
@@ -14,15 +14,16 @@
 - **Secondary Color**: Inha Green (`#00843D`) - 편안함과 안정감.
 - **Concept**: 모바일 앱과 같은 직관적인 웹뷰 UI.
 
-## 📂 프로젝트 구조
-- `frontend/`: React (TypeScript) 기반 사용자 인터페이스
-- `backend/`: FastAPI 기반 챗봇 로직 및 API 서버
-- `assets/`: 기획 문서 및 디자인 리소스
-  - `assets/docs/`: 기획 및 설계 상세 문서
-    - [01. 페르소나 설계 (인덕이)](./assets/docs/01_persona_design.md)
-    - [02. 기술 사양서](./assets/docs/02_technical_specification.md)
-  - `assets/design/`: SVG 디자인 원본 파일 (Desktop/Mobile)
-- `data/`: 학사 정보 및 학과 안내 데이터셋
+## 🛠️ Zero-Cost 기술 스택
+
+본 프로젝트는 운영 비용 0원을 목표로 하는 **Serverless WebApp** 아키텍처를 따릅니다.
+
+- **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS
+- **Backend**: FastAPI (Vercel Serverless Functions)
+- **Database**: Supabase (PostgreSQL + pgvector)
+- **LLM**: Gemini 1.5 Flash (Google AI Studio)
+- **Deployment**: Vercel (Full Stack)
+- **App Experience**: PWA (Progressive Web App) 지원
 
 ## 🚀 시작하기
 

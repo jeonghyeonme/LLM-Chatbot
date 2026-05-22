@@ -9,5 +9,6 @@ langchain
 langchain-openai
 chromadb
 openai
+supabase
 pytest
 httpx

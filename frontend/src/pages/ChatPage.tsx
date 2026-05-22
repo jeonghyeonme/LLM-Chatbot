@@ -3,8 +3,7 @@ import Header from '../components/Header'
 import induckMascot from '../assets/induck-i.svg'
 import { Link } from 'react-router-dom'
 
-/**
- * 챗봇 메시지 타입 정의
+/* * 챗봇 메시지 타입 정의
  * role: 'user' (사용자) | 'bot' (인덕이)
  */
 interface Message {
@@ -12,24 +11,23 @@ interface Message {
   content: string;
 }
 
-/**
- * 메인 챗봇 페이지 컴포넌트
+/* * 메인 챗봇 페이지 컴포넌트
  */
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
 
-  // 메시지 전송 핸들러
+  /* 메시지 전송 핸들러 */
   const handleSend = () => {
     if (!input.trim()) return
     
-    // 사용자 메시지 추가
+    /* 사용자 메시지 추가 */
     const userMsg: Message = { role: 'user', content: input }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     
-    // 인덕이 응답 시뮬레이션
+    /* 인덕이 응답 시뮬레이션 */
     setIsTyping(true)
     setTimeout(() => {
       const botMsg: Message = { 
@@ -41,13 +39,15 @@ export default function ChatPage() {
     }, 1000)
   }
 
-  // 하단 퀵 메뉴 버튼 구성
+  /* 하단 퀵 메뉴 버튼 구성 */
   const quickMenus = [
     { label: '📅 학사일정', path: '/calendar' },
     { label: '🗺️ 캠퍼스맵', path: '/map' },
     { label: '📢 공지사항', path: '/calendar' },
     { label: '🍱 식단안내', path: '/cafeteria' },
     { label: '💰 장학금', path: '#' },
+    { label: '📚 도서관', path: '#' },
+    { label: '🏫 강의실 조회', path: '#' },
   ]
 
   return (
@@ -112,16 +112,30 @@ export default function ChatPage() {
         </div>
       </main>
 
-      {/* 하단 고정 입력창 및 퀵 메뉴 */}
-      <footer className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-inha-border px-4 pt-4 pb-8 flex flex-col items-center gap-4 z-50">
+{/* 하단 고정 입력창 및 퀵 메뉴 */}
+<footer className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-inha-border px-4 pt-4 pb-8 flex flex-col items-center gap-4 z-50">
+        
         {/* 퀵 메뉴 버튼 리스트 */}
-        <div className="w-full max-w-2xl flex gap-2 md:gap-3 overflow-x-auto no-scrollbar px-4 justify-start md:justify-center">
+        {/* 💡 핵심 수정: 폭은 아래 입력창과 똑같이 max-w-[600px]로 묶고, px-4(좌우 여백)를 준 상태에서 'overflow-x-auto'가 작동하게 조율하여 폭 일치화와 첫 칩 잘림을 동시에 해결했습니다. */}
+        <div 
+          className="w-full max-w-[600px] flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap"
+          style={{
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+          }}
+        >
+          <style>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+
           {quickMenus.map((menu) => (
             menu.path.startsWith('/') ? (
               <Link
                 key={menu.label}
                 to={menu.path}
-                className="px-4 py-2 md:px-5 md:py-2.5 rounded-inha-pill border border-inha-blue/30 text-inha-blue text-xs md:text-sm font-semibold hover:bg-inha-blue hover:text-white hover:border-inha-blue transition-all whitespace-nowrap shadow-sm bg-white"
+                className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
               >
                 {menu.label}
               </Link>
@@ -129,7 +143,7 @@ export default function ChatPage() {
               <button
                 key={menu.label}
                 onClick={() => setInput(menu.label.split(' ')[1])}
-                className="px-4 py-2 md:px-5 md:py-2.5 rounded-inha-pill border border-inha-blue/30 text-inha-blue text-xs md:text-sm font-semibold hover:bg-inha-blue hover:text-white hover:border-inha-blue transition-all whitespace-nowrap shadow-sm bg-white"
+                className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
               >
                 {menu.label}
               </button>

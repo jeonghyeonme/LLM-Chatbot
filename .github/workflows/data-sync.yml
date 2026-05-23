@@ -4,6 +4,15 @@ on:
   schedule:
     # 매주 월요일 한국 시간 오전 9시 (UTC 00:00)
     - cron: '0 0 * * 1'
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/data-sync.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
   workflow_dispatch: # 수동 실행 버튼 제공
 
 jobs:

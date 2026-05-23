@@ -1,14 +1,16 @@
-name: Weekly Data Crawler
+name: Weekly Data Sync
 
 on:
   schedule:
-    # 매주 월요일 새벽 0시 (UTC 기준, 한국 시간 오전 9시) 실행
+    # 매주 월요일 한국 시간 오전 9시 (UTC 00:00)
     - cron: '0 0 * * 1'
   workflow_dispatch: # 수동 실행 버튼 제공
 
 jobs:
-  crawl:
+  run-sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # 쓰기 권한 제거하여 차단 가능성 최소화
 
     steps:
       - name: Checkout repository
@@ -29,14 +31,11 @@ jobs:
         run: |
           python -m playwright install chromium --with-deps
 
-      - name: Run Crawler
+      - name: Execute Crawler
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd backend
           python app/run_crawler.py
-
-      - name: Keepalive Workflow
-        # GitHub Actions는 60일간 활동이 없으면 중단되므로 방지용 step
-        uses: gautamkrishnar/keepalive-workflow@v2

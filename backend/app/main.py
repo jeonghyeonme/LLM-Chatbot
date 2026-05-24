@@ -3,20 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from core.logger import logger
-from app.routers import calendar, mealPlan
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
+# CORS 설정: 프런트엔드 배포 주소 및 로컬 주소 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://induck-it.vercel.app", # 필요시 실제 Vercel 주소로 변경
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(calendar.router)
-app.include_router(mealPlan.router)
 
 @app.get("/health")
 async def health_check():
@@ -24,7 +24,7 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Inha-Bot API"}
+    return {"message": "Welcome to Inha-Bot API (AI & Data Ingestion Ready)"}
 
 if __name__ == "__main__":
     import uvicorn

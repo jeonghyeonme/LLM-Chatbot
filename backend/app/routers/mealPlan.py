@@ -1,8 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.core.supabase import supabase
-from backend.core.logger import logger
+from core.supabase import supabase
+from core.logger import logger
 
 router = APIRouter(prefix="/api/mealPlan", tags=["mealPlan"])
 

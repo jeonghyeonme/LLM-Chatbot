@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.core.config import settings
-from backend.core.logger import logger
-from backend.app.routers import calendar, mealPlan
+from core.config import settings
+from core.logger import logger
+from app.routers import calendar, mealPlan
 
 app = FastAPI(title=settings.PROJECT_NAME)
 

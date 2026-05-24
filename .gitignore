@@ -26,6 +26,10 @@ venv/
 .venv/
 ENV/
 
+# 위 Python 섹션의 `lib/` 패턴이 프론트엔드 lib 폴더까지 잡아서 예외 지정
+!frontend/src/lib/
+!frontend/src/lib/**
+
 # OS
 .DS_Store
 Thumbs.db

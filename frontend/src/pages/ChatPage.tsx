@@ -39,12 +39,12 @@ export default function ChatPage() {
     return () => window.removeEventListener('resize', checkScroll)
   }, [])
 
-  /* 부드러운 스크롤 이동 */
+  /* 양 끝으로 부드러운 스크롤 이동 */
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 200
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
+      const { scrollWidth } = scrollRef.current
+      scrollRef.current.scrollTo({
+        left: direction === 'left' ? 0 : scrollWidth,
         behavior: 'smooth'
       })
     }
@@ -147,68 +147,78 @@ export default function ChatPage() {
 {/* 하단 고정 입력창 및 퀵 메뉴 */}
 <footer className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-inha-border px-4 pt-4 pb-8 flex flex-col items-center gap-4 z-50">
         
-        {/* 퀵 메뉴 버튼 리스트 영역 */}
-        <div className="w-full max-w-[600px] relative group px-2">
+        {/* 퀵 메뉴 영역 (화살표 외부 배치) */}
+        <div className="w-full flex items-center justify-center gap-1 md:gap-3">
+          
           {/* 좌측 화살표 (데스크탑 전용) */}
-          {showLeftArrow && (
-            <button 
-              onClick={() => scroll('left')}
-              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-white/80 border border-inha-border rounded-full shadow-sm text-inha-blue hover:bg-white transition-all"
+          <div className="hidden md:flex w-10 justify-center">
+            {showLeftArrow && (
+              <button 
+                onClick={() => scroll('left')}
+                className="w-8 h-8 flex items-center justify-center bg-white border border-inha-border rounded-full shadow-sm text-inha-blue hover:bg-gray-50 hover:shadow-md active:scale-90 transition-all"
+                title="왼쪽으로 스크롤"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* 퀵 메뉴 버튼 리스트 영역 */}
+          <div className="w-full max-w-[600px] relative group overflow-hidden">
+            {/* 스크롤 컨테이너 */}
+            <div 
+              ref={scrollRef}
+              onScroll={checkScroll}
+              className="w-full flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap scroll-smooth no-scrollbar"
+              style={{
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
+              }}
             >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
+              <style>{`
+                .no-scrollbar::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
 
-          {/* 스크롤 컨테이너 */}
-          <div 
-            ref={scrollRef}
-            onScroll={checkScroll}
-            className="w-full flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap scroll-smooth no-scrollbar"
-            style={{
-              msOverflowStyle: 'none',
-              scrollbarWidth: 'none',
-            }}
-          >
-            <style>{`
-              .no-scrollbar::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
+              {quickMenus.map((menu) => (
+                menu.path.startsWith('/') ? (
+                  <Link
+                    key={menu.label}
+                    to={menu.path}
+                    className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+                  >
+                    {menu.label}
+                  </Link>
+                ) : (
+                  <button
+                    key={menu.label}
+                    onClick={() => setInput(menu.label.split(' ')[1])}
+                    className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+                  >
+                    {menu.label}
+                  </button>
+                )
+              ))}
+            </div>
 
-            {quickMenus.map((menu) => (
-              menu.path.startsWith('/') ? (
-                <Link
-                  key={menu.label}
-                  to={menu.path}
-                  className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-                >
-                  {menu.label}
-                </Link>
-              ) : (
-                <button
-                  key={menu.label}
-                  onClick={() => setInput(menu.label.split(' ')[1])}
-                  className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-                >
-                  {menu.label}
-                </button>
-              )
-            ))}
+            {/* 좌우 그라데이션 마스크 (스크롤 가능 여부 시각화) */}
+            <div className={`hidden md:block absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10 transition-opacity duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
+            <div className={`hidden md:block absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10 transition-opacity duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} />
           </div>
 
           {/* 우측 화살표 (데스크탑 전용) */}
-          {showRightArrow && (
-            <button 
-              onClick={() => scroll('right')}
-              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-white/80 border border-inha-border rounded-full shadow-sm text-inha-blue hover:bg-white transition-all"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* 좌우 그라데이션 마스크 (데스크탑 전용 시각적 효과) */}
-          <div className="hidden md:block absolute left-4 top-0 bottom-0 w-8 bg-gradient-to-r from-white/90 to-transparent pointer-events-none z-0" />
-          <div className="hidden md:block absolute right-4 top-0 bottom-0 w-8 bg-gradient-to-l from-white/90 to-transparent pointer-events-none z-0" />
+          <div className="hidden md:flex w-10 justify-center">
+            {showRightArrow && (
+              <button 
+                onClick={() => scroll('right')}
+                className="w-8 h-8 flex items-center justify-center bg-white border border-inha-border rounded-full shadow-sm text-inha-blue hover:bg-gray-50 hover:shadow-md active:scale-90 transition-all"
+                title="오른쪽으로 스크롤"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 메시지 입력 영역 */}

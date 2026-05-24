@@ -1,0 +1,64 @@
+name: Weekly Data Sync
+
+on:
+  schedule:
+    # 매주 월요일 한국 시간 오전 9시 (UTC 00:00)
+    - cron: '0 0 * * 1'
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/data-sync.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+  workflow_dispatch: # 수동 실행 버튼 제공
+
+jobs:
+  run-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # 쓰기 권한 제거하여 차단 가능성 최소화
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip' # pip 패키지 캐싱 자동 활성화
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('backend/requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: |
+          python -m playwright install chromium --with-deps
+
+      - name: Install Playwright Dependencies (if cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: |
+          python -m playwright install-deps chromium
+
+      - name: Execute Crawler
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          cd backend
+          python app/run_crawler.py

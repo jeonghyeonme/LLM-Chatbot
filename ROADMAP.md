@@ -14,7 +14,7 @@
 ## 📅 통합 개발 로드맵 (Checklist & Guide)
 
 ### 1. 데이터 수집 및 지식 베이스 (Data)
-- [ ] **[D-1] GitHub Actions 기반 크롤링 자동화**
+- [x] **[D-1] GitHub Actions 기반 크롤링 자동화**
     - **대상**: 학교 홈페이지 학생식당 및 학사일정 페이지
     - **기술**: Python (`requests`, `bs4`) + GitHub Actions Workflow 스케줄링
     - **저장**: Supabase API를 통한 `meals`, `schedules` 테이블 직접 적재

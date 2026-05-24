@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Header from '../components/Header'
 import induckMascot from '../assets/induck-i.webp'
 import { Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 /* * 챗봇 메시지 타입 정의
  * role: 'user' (사용자) | 'bot' (인덕이)
@@ -18,30 +19,35 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
 
-  // 퀵 메뉴 드래그 스크롤을 위한 Ref 및 상태
+  // 퀵 메뉴 스크롤 제어를 위한 Ref 및 상태
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [isMouseDown, setIsMouseDown] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeft, setScrollLeft] = useState(0)
+  const [showLeftArrow, setShowLeftArrow] = useState(false)
+  const [showRightArrow, setShowRightArrow] = useState(false)
 
-  /* 드래그 스크롤 핸들러 */
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollRef.current) return
-    setIsMouseDown(true)
-    setStartX(e.pageX - scrollRef.current.offsetLeft)
-    setScrollLeft(scrollRef.current.scrollLeft)
+  /* 스크롤 상태 체크 (화살표 표시 여부 결정) */
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      setShowLeftArrow(scrollLeft > 10)
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10)
+    }
   }
 
-  const handleMouseLeaveOrUp = () => {
-    setIsMouseDown(false)
-  }
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [])
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isMouseDown || !scrollRef.current) return
-    e.preventDefault()
-    const x = e.pageX - scrollRef.current.offsetLeft
-    const walk = (x - startX) * 1.5 // 스크롤 속도 배율
-    scrollRef.current.scrollLeft = scrollLeft - walk
+  /* 부드러운 스크롤 이동 */
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 200
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
   }
 
   /* 메시지 전송 핸들러 */
@@ -141,45 +147,68 @@ export default function ChatPage() {
 {/* 하단 고정 입력창 및 퀵 메뉴 */}
 <footer className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-inha-border px-4 pt-4 pb-8 flex flex-col items-center gap-4 z-50">
         
-        {/* 퀵 메뉴 버튼 리스트 */}
-        {/* 💡 핵심 수정: 폭은 아래 입력창과 똑같이 max-w-[600px]로 묶고, px-4(좌우 여백)를 준 상태에서 'overflow-x-auto'가 작동하게 조율하여 폭 일치화와 첫 칩 잘림을 동시에 해결했습니다. */}
-        <div 
-          ref={scrollRef}
-          onMouseDown={handleMouseDown}
-          onMouseLeave={handleMouseLeaveOrUp}
-          onMouseUp={handleMouseLeaveOrUp}
-          onMouseMove={handleMouseMove}
-          className="w-full max-w-[600px] flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap active:cursor-grabbing select-none"
-          style={{
-            msOverflowStyle: 'none',
-            scrollbarWidth: 'none',
-          }}
-        >
-          <style>{`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
+        {/* 퀵 메뉴 버튼 리스트 영역 */}
+        <div className="w-full max-w-[600px] relative group px-2">
+          {/* 좌측 화살표 (데스크탑 전용) */}
+          {showLeftArrow && (
+            <button 
+              onClick={() => scroll('left')}
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-white/80 border border-inha-border rounded-full shadow-sm text-inha-blue hover:bg-white transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
 
-          {quickMenus.map((menu) => (
-            menu.path.startsWith('/') ? (
-              <Link
-                key={menu.label}
-                to={menu.path}
-                className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-              >
-                {menu.label}
-              </Link>
-            ) : (
-              <button
-                key={menu.label}
-                onClick={() => setInput(menu.label.split(' ')[1])}
-                className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-              >
-                {menu.label}
-              </button>
-            )
-          ))}
+          {/* 스크롤 컨테이너 */}
+          <div 
+            ref={scrollRef}
+            onScroll={checkScroll}
+            className="w-full flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap scroll-smooth no-scrollbar"
+            style={{
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
+            }}
+          >
+            <style>{`
+              .no-scrollbar::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+
+            {quickMenus.map((menu) => (
+              menu.path.startsWith('/') ? (
+                <Link
+                  key={menu.label}
+                  to={menu.path}
+                  className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+                >
+                  {menu.label}
+                </Link>
+              ) : (
+                <button
+                  key={menu.label}
+                  onClick={() => setInput(menu.label.split(' ')[1])}
+                  className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+                >
+                  {menu.label}
+                </button>
+              )
+            ))}
+          </div>
+
+          {/* 우측 화살표 (데스크탑 전용) */}
+          {showRightArrow && (
+            <button 
+              onClick={() => scroll('right')}
+              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-white/80 border border-inha-border rounded-full shadow-sm text-inha-blue hover:bg-white transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* 좌우 그라데이션 마스크 (데스크탑 전용 시각적 효과) */}
+          <div className="hidden md:block absolute left-4 top-0 bottom-0 w-8 bg-gradient-to-r from-white/90 to-transparent pointer-events-none z-0" />
+          <div className="hidden md:block absolute right-4 top-0 bottom-0 w-8 bg-gradient-to-l from-white/90 to-transparent pointer-events-none z-0" />
         </div>
 
         {/* 메시지 입력 영역 */}

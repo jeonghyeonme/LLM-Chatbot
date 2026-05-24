@@ -14,7 +14,7 @@ export default function Header() {
     { label: '🤖 챗봇', path: '/' },
     { label: '📅 학사일정', path: '/calendar' },
     { label: '🗺️ 캠퍼스맵', path: '/map' },
-    { label: '🍱 식단안내',path: '/mealPlan'},
+    { label: '🍱 식단안내',path: '/cafeteria'},
   ];
 
   return (

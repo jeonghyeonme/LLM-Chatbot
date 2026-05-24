@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Header from '../components/Header'
-import induckMascot from '../assets/induck-i.svg'
+import induckMascot from '../assets/induck-i.webp'
 import { Link } from 'react-router-dom'
 
 /* * 챗봇 메시지 타입 정의
@@ -17,6 +17,32 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+
+  // 퀵 메뉴 드래그 스크롤을 위한 Ref 및 상태
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [isMouseDown, setIsMouseDown] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [scrollLeft, setScrollLeft] = useState(0)
+
+  /* 드래그 스크롤 핸들러 */
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return
+    setIsMouseDown(true)
+    setStartX(e.pageX - scrollRef.current.offsetLeft)
+    setScrollLeft(scrollRef.current.scrollLeft)
+  }
+
+  const handleMouseLeaveOrUp = () => {
+    setIsMouseDown(false)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || !scrollRef.current) return
+    e.preventDefault()
+    const x = e.pageX - scrollRef.current.offsetLeft
+    const walk = (x - startX) * 1.5 // 스크롤 속도 배율
+    scrollRef.current.scrollLeft = scrollLeft - walk
+  }
 
   /* 메시지 전송 핸들러 */
   const handleSend = () => {
@@ -118,7 +144,12 @@ export default function ChatPage() {
         {/* 퀵 메뉴 버튼 리스트 */}
         {/* 💡 핵심 수정: 폭은 아래 입력창과 똑같이 max-w-[600px]로 묶고, px-4(좌우 여백)를 준 상태에서 'overflow-x-auto'가 작동하게 조율하여 폭 일치화와 첫 칩 잘림을 동시에 해결했습니다. */}
         <div 
-          className="w-full max-w-[600px] flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap"
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeaveOrUp}
+          onMouseUp={handleMouseLeaveOrUp}
+          onMouseMove={handleMouseMove}
+          className="w-full max-w-[600px] flex gap-2.5 overflow-x-auto py-1.5 px-4 justify-start whitespace-nowrap active:cursor-grabbing select-none"
           style={{
             msOverflowStyle: 'none',
             scrollbarWidth: 'none',

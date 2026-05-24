@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import induckMascot from '../assets/induck-i.svg'
+import induckMascot from '../assets/induck-i.webp'
 
 /**
  * 프로젝트 전반에서 사용되는 공통 헤더 컴포넌트

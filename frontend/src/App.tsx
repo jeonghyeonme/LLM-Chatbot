@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import ChatPage from './pages/ChatPage'
 import CalendarPage from './pages/CalendarPage'
 import MapPage from './pages/MapPage'
-import CafeteriaPage from './pages/CafeteriaPage'
+import MealPlanPage from './pages/MealPlanPage'
 import './App.css'
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<ChatPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/map" element={<MapPage />} />
-        <Route path="/cafeteria" element={<CafeteriaPage />} />
+        <Route path="/mealPlan" element={<MealPlanPage />} />
         {/* Fallback to home */}
         <Route path="*" element={<ChatPage />} />
       </Routes>

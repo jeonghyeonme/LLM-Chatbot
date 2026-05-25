@@ -1,15 +1,20 @@
 from supabase import create_client, Client
 from core.config import settings
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 url: str = settings.SUPABASE_URL
 key: str = settings.SUPABASE_ANON_KEY
 
-if not url or not key:
-    print("Warning: SUPABASE_URL or SUPABASE_ANON_KEY is not set.")
+# 단일 클라이언트 인스턴스 (조건부 초기화)
+supabase: Optional[Client] = None
 
-# 단일 클라이언트 인스턴스
-supabase: Client = create_client(url, key)
+if url and key:
+    try:
+        supabase = create_client(url, key)
+    except Exception as e:
+        print(f"Error initializing Supabase client: {e}")
+else:
+    print("Warning: SUPABASE_URL or SUPABASE_ANON_KEY is not set. Database features will be disabled.")
 
 class SupabaseService:
     @staticmethod
@@ -17,8 +22,11 @@ class SupabaseService:
         """
         식단 데이터를 업서트합니다.
         """
+        if not supabase:
+            return None
+
         if not meals:
-            return
+            return None
 
         try:
             response = supabase.table("meals").upsert(
@@ -35,8 +43,11 @@ class SupabaseService:
         """
         학사일정 데이터를 업서트합니다. (시작일, 종료일, 제목이 같으면 업데이트)
         """
+        if not supabase:
+            return None
+
         if not schedules:
-            return
+            return None
 
         try:
             response = supabase.table("schedules").upsert(

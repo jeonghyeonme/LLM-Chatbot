@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown' 
 import Header from '../components/Header'
 import induckMascot from '../assets/induck-i.webp'
 import { Link } from 'react-router-dom'
@@ -115,7 +114,6 @@ export default function ChatPage() {
   }
 
   /* 메시지 전송 핸들러 */
-  /* 매개변수 textToSend를 추가하여 입력창 전송과 퀵 버튼 클릭 전송을 동시 지원 */
   const handleSend = (textToSend?: string) => {
     const targetText = textToSend || input;
     if (!targetText.trim()) return
@@ -124,7 +122,6 @@ export default function ChatPage() {
     const userMsg: Message = { role: 'user', content: targetText }
     setMessages(prev => [...prev, userMsg])
     
-    /* 입력창에서 전송했을 때만 칸을 비워줍니다. */
     if (!textToSend) {
       setInput('')
     }
@@ -132,11 +129,55 @@ export default function ChatPage() {
     /* 인덕이 응답 시뮬레이션 */
     setIsTyping(true)
     setTimeout(() => {
-      /* 고정 더미 답변 대신 사용자가 보낸 키워드(targetText)에 맞는 맞춤형 데이터 주입 */
       const customResponse = getCustomBotResponse(targetText)
       simulateStreamingResponse(customResponse)
     }, 1000)
   }
+
+  /* [Vercel 빌드 보장용 함수] */
+  /* 일반 텍스트 내의 마크다운 개행 및 글자 강조 문법을 안전하게 가공 */
+  const renderFormattedContent = (content: string) => {
+    return content.split('\n').map((line, lineIdx) => {
+      let renderedLine = line;
+      
+      /* ### 소제목 처리 */
+      if (renderedLine.startsWith('### ')) {
+        return <h3 key={lineIdx} className="text-base font-bold text-inha-blue mt-2 mb-1">{renderedLine.replace('### ', '')}</h3>;
+      }
+      
+      /* ** 볼드체 처리 (정규식 교체) */
+      const boldRegex = /\*\*(.*?)\*\*/g;
+      const parts = [];
+      let lastIndex = 0;
+      let match;
+
+      while ((match = boldRegex.exec(renderedLine)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push(renderedLine.substring(lastIndex, match.index));
+        }
+        parts.push(<strong key={match.index} className="font-bold text-inha-blue">{match[1]}</strong>);
+        lastIndex = boldRegex.lastIndex;
+      }
+      
+      if (lastIndex < renderedLine.length) {
+        parts.push(renderedLine.substring(lastIndex));
+      }
+
+      const finalLine = parts.length > 0 ? parts : renderedLine;
+
+      /* 리스트 불릿 처리 */
+      if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
+        const cleanLine = line.trim().substring(2);
+        return (
+          <ul key={lineIdx} className="list-disc pl-4 text-sm my-0.5">
+            <li>{finalLine === line ? cleanLine : finalLine}</li>
+          </ul>
+        );
+      }
+
+      return <p key={lineIdx} className="text-sm my-0.5 min-h-[1rem]">{finalLine}</p>;
+    });
+  };
 
   /* 하단 퀵 메뉴 버튼 구성 */
   const quickMenus = [
@@ -188,10 +229,10 @@ export default function ChatPage() {
                       ? 'bg-inha-blue text-white rounded-tr-none' 
                       : 'bg-white border border-inha-border text-inha-text-main rounded-tl-none'
                   }`}>
-                    {/* 인덕이(bot)의 답변은 텍스트 대신 ReactMarkdown 컴포넌트로 렌더링 */}
+                    {/* 💡 Vercel 빌드 호환성 100% 보장하는 파싱 렌더러 연동 */}
                     {msg.role === 'bot' ? (
-                      <div className="prose prose-sm max-w-none text-inha-text-main leading-relaxed">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <div className="text-inha-text-main leading-relaxed">
+                        {renderFormattedContent(msg.content)}
                       </div>
                     ) : (
                       msg.content
@@ -222,7 +263,6 @@ export default function ChatPage() {
       </main>
 
       {/* 하단 고정 입력창 및 퀵 메뉴 */}
-      /* 웹뷰최적화: 모바일 기기의 하단 바/곡면 가림을 방지하기 위해 env(safe-area-inset-bottom) 반응형 패딩 적용 */
       <footer className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-inha-border px-4 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex flex-col items-center gap-4 z-50">
         
         {/* 퀵 메뉴 영역 (화살표 외부 배치) */}
@@ -271,7 +311,6 @@ export default function ChatPage() {
                 ) : (
                   <button
                     key={menu.label}
-                    /* 버튼 클릭 시 한글 키워드만 쪼개서 handleSend로 즉시 원클릭 작동하게 연동 완료!*/
                     onClick={() => handleSend(menu.label.split(' ')[1])}
                     className="inline-flex items-center px-4 py-2 rounded-2xl bg-gradient-to-r from-white/80 to-inha-blue/5 backdrop-blur-md border border-inha-blue/15 text-gray-700 text-xs md:text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(28,100,242,0.12)] hover:border-inha-blue/30 active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
                   >

@@ -54,6 +54,15 @@ jobs:
         run: |
           python -m playwright install-deps chromium
 
+      - name: Debug Environment Variables
+        run: |
+          echo "Checking environment variables (length only)..."
+          if [ -n "$SUPABASE_URL" ]; then echo "SUPABASE_URL is set (length: ${#SUPABASE_URL})"; else echo "SUPABASE_URL is NOT set"; fi
+          if [ -n "$SUPABASE_ANON_KEY" ]; then echo "SUPABASE_ANON_KEY is set (length: ${#SUPABASE_ANON_KEY})"; else echo "SUPABASE_ANON_KEY is NOT set"; fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
       - name: Execute Crawler
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

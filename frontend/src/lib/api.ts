@@ -44,7 +44,7 @@ function splitMenu(menuContent: string | null): string[] {
   return menuContent.split('\n').map((line) => line.trim()).filter(Boolean)
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // API Functions (Via Backend for CORS & Security)

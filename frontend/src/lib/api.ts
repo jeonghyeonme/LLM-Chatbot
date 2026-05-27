@@ -84,7 +84,8 @@ export async function fetchMeals(params?: {
   meal_type?: string
   limit?: number
 }): Promise<Meal[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/meals`)
+  const baseUrl = API_BASE_URL || window.location.origin
+  const url = new URL(`${baseUrl}/api/data/meals`)
   if (params?.date) url.searchParams.append('date', params.date)
   if (params?.meal_type) url.searchParams.append('meal_type', params.meal_type)
   if (params?.limit) url.searchParams.append('limit', params.limit.toString())

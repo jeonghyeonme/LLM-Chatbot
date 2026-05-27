@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 export interface Schedule {
   id: string
   title: string

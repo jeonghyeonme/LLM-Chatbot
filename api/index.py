@@ -1,14 +1,11 @@
 import sys
 import os
 
-# 현재 파일(api/index.py)의 부모의 부모 디렉토리(루트)를 path에 추가
-root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(root_dir)
-sys.path.append(os.path.join(root_dir, 'backend'))
+# backend 디렉토리를 sys.path에 추가하여 모듈 임포트 가능하게 설정
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend', 'app'))
 
-# backend.app.main에서 app 임포트
 from app.main import app
 
-# Vercel이 기대하는 핸들러 이름
+# Vercel은 'app' 객체를 요구할 수 있으므로 별칭 설정
 handler = app
-app = handler # 둘 다 지원하도록 설정

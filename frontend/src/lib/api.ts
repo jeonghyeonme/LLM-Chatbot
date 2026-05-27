@@ -46,16 +46,6 @@ function splitMenu(menuContent: string | null): string[] {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
 
-/**
- * API URL 생성 헬퍼
- */
-function getApiUrl(path: string): string {
-  if (import.meta.env.DEV || API_BASE_URL) {
-    return `${API_BASE_URL}${path}`
-  }
-  return path // Vercel 배포 환경에서는 상대 경로 사용
-}
-
 // ──────────────────────────────────────────────────────────────────────────────
 // API Functions (Via Backend for CORS & Security)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -65,15 +55,12 @@ export async function fetchSchedules(params?: {
   end?: string
   limit?: number
 }): Promise<Schedule[]> {
-  const query = new URLSearchParams()
-  if (params?.start) query.append('start', params.start)
-  if (params?.end) query.append('end', params.end)
-  if (params?.limit) query.append('limit', params.limit.toString())
+  const url = new URL(`${API_BASE_URL}/api/data/schedules`)
+  if (params?.start) url.searchParams.append('start', params.start)
+  if (params?.end) url.searchParams.append('end', params.end)
+  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
 
-  const queryString = query.toString()
-  const url = getApiUrl(`/api/data/schedules${queryString ? `?${queryString}` : ''}`)
-
-  const response = await fetch(url)
+  const response = await fetch(url.toString())
   if (!response.ok) {
     console.error('Failed to fetch schedules')
     throw new Error('Failed to fetch schedules')
@@ -97,15 +84,13 @@ export async function fetchMeals(params?: {
   meal_type?: string
   limit?: number
 }): Promise<Meal[]> {
-  const query = new URLSearchParams()
-  if (params?.date) query.append('date', params.date)
-  if (params?.meal_type) query.append('meal_type', params.meal_type)
-  if (params?.limit) query.append('limit', params.limit.toString())
+  const baseUrl = API_BASE_URL || window.location.origin
+  const url = new URL(`${baseUrl}/api/data/meals`)
+  if (params?.date) url.searchParams.append('date', params.date)
+  if (params?.meal_type) url.searchParams.append('meal_type', params.meal_type)
+  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
 
-  const queryString = query.toString()
-  const url = getApiUrl(`/api/data/meals${queryString ? `?${queryString}` : ''}`)
-
-  const response = await fetch(url)
+  const response = await fetch(url.toString())
   if (!response.ok) {
     console.error('Failed to fetch meals')
     throw new Error('Failed to fetch meals')

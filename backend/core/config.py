@@ -14,6 +14,7 @@ if ENV_PATH.exists():
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Inha-Bot API"
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     
     # Supabase Settings (Unified to SUPABASE_ANON_KEY)
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")

@@ -46,8 +46,10 @@ function splitMenu(menuContent: string | null): string[] {
   return menuContent.split('\n').map((line) => line.trim()).filter(Boolean)
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 // ──────────────────────────────────────────────────────────────────────────────
-// API Functions (Directly via Supabase)
+// API Functions (Via Backend for CORS & Security)
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function fetchSchedules(params?: {
@@ -55,25 +57,22 @@ export async function fetchSchedules(params?: {
   end?: string
   limit?: number
 }): Promise<Schedule[]> {
-  let query = supabase
-    .from('schedules')
-    .select('id, title, start_date, end_date')
-    .order('start_date', { ascending: true })
-    .limit(params?.limit || 100)
+  const url = new URL(`${API_BASE_URL}/api/data/schedules`)
+  if (params?.start) url.searchParams.append('start', params.start)
+  if (params?.end) url.searchParams.append('end', params.end)
+  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
 
-  if (params?.start) query = query.gte('start_date', params.start)
-  if (params?.end) query = query.lte('start_date', params.end)
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Failed to fetch schedules:', error)
-    throw error
+  const response = await fetch(url.toString())
+  if (!response.ok) {
+    console.error('Failed to fetch schedules')
+    throw new Error('Failed to fetch schedules')
   }
 
+  const data = await response.json()
+
   return (data || [])
-    .filter((r) => !EXCLUDE_KEYWORDS.some((kw) => r.title?.includes(kw)))
-    .map((r) => ({
+    .filter((r: any) => !EXCLUDE_KEYWORDS.some((kw) => r.title?.includes(kw)))
+    .map((r: any) => ({
       id: r.id,
       title: r.title,
       start_date: r.start_date,
@@ -87,24 +86,20 @@ export async function fetchMeals(params?: {
   meal_type?: string
   limit?: number
 }): Promise<Meal[]> {
-  let query = supabase
-    .from('meals')
-    .select('id, date, meal_type, menu_category, menu_content, restaurant_type')
-    .eq('restaurant_type', TARGET_RESTAURANT)
-    .order('date', { ascending: true })
-    .limit(params?.limit || 50)
+  const url = new URL(`${API_BASE_URL}/api/data/meals`)
+  if (params?.date) url.searchParams.append('date', params.date)
+  if (params?.meal_type) url.searchParams.append('meal_type', params.meal_type)
+  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
 
-  if (params?.date) query = query.eq('date', params.date)
-  if (params?.meal_type) query = query.eq('meal_type', params.meal_type)
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Failed to fetch meals:', error)
-    throw error
+  const response = await fetch(url.toString())
+  if (!response.ok) {
+    console.error('Failed to fetch meals')
+    throw new Error('Failed to fetch meals')
   }
 
-  return (data || []).map((r) => ({
+  const data = await response.json()
+
+  return (data || []).map((r: any) => ({
     id: r.id,
     date: r.date,
     meal_type: r.meal_type,
@@ -113,4 +108,64 @@ export async function fetchMeals(params?: {
     menu_items: splitMenu(r.menu_content),
     price: resolvePrice(r.meal_type, r.menu_category),
   }))
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Chat API Functions
+// ──────────────────────────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  role: 'user' | 'bot' | 'assistant'
+  content: string
+}
+
+export async function sendMessage(
+  messages: ChatMessage[],
+  onUpdate?: (content: string) => void
+): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messages }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.detail || 'Failed to send message')
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) throw new Error('Failed to get response reader')
+
+  let fullContent = ''
+  const decoder = new TextDecoder()
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    const chunk = decoder.decode(value)
+    const lines = chunk.split('\n')
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6).trim()
+        if (data === '[DONE]') break
+        
+        try {
+          const parsed = JSON.parse(data)
+          if (parsed.content) {
+            fullContent += parsed.content
+            if (onUpdate) onUpdate(fullContent)
+          }
+        } catch (e) {
+          console.error('Failed to parse stream chunk:', e)
+        }
+      }
+    }
+  }
+
+  return fullContent
 }

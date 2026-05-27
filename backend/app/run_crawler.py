@@ -27,14 +27,24 @@ def main():
     from core.config import settings
     if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
         print("💾 Supabase에 데이터 적재 중...")
-        # Static methods 사용
-        meal_res = SupabaseService.upsert_meals(meals)
-        if meal_res:
-            print("✅ 식단 데이터 적재 완료")
+        
+        # 식단 데이터 처리: 삭제 후 삽입 (중복 방지)
+        if meals:
+            dates = [m['date'] for m in meals]
+            start_date = min(dates)
+            end_date = max(dates)
             
+            print(f"🧹 기존 데이터 삭제 중 ({start_date} ~ {end_date})...")
+            SupabaseService.delete_meals_by_date_range(start_date, end_date)
+            
+            meal_res = SupabaseService.upsert_meals(meals)
+            if meal_res:
+                print(f"✅ 식단 데이터 {len(meals)}개 적재 완료")
+            
+        # 학사일정은 기존 방식(Upsert) 유지
         sch_res = SupabaseService.upsert_schedules(schedules)
         if sch_res:
-            print("✅ 학사일정 데이터 적재 완료")
+            print(f"✅ 학사일정 데이터 {len(schedules)}개 적재 완료")
     else:
         print("⚠️ Supabase 설정(URL/ANON_KEY)이 없어 DB 적재를 건너뜁니다. (.env 파일을 확인해주세요)")
 

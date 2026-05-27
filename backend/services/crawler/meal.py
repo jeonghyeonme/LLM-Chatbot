@@ -12,7 +12,7 @@ class MealCrawler(BaseCrawler):
 
     def fetch_all_meals(self) -> List[Dict]:
         """
-        Playwright 브라우저를 띄워 학생식당과 교직원식당 데이터를 긁어옵니다.
+        Playwright 브라우저를 띄워 학생식당 데이터를 긁어옵니다. (교직원식당은 제외)
         """
         all_meals = []
         
@@ -35,11 +35,7 @@ class MealCrawler(BaseCrawler):
                 time.sleep(2) # 렌더링 대기
                 all_meals.extend(self._parse_current_page(page.content(), "학생식당"))
                 
-                # 2. 교직원식당 긁기
-                print("  🍱 [교직원식당] 데이터 수집 중...")
-                page.click("a:has-text('교직원식당')")
-                time.sleep(2) # 렌더링 대기
-                all_meals.extend(self._parse_current_page(page.content(), "교직원식당"))
+                # 교직원식당은 요청에 따라 제외함
                 
             except Exception as e:
                 print(f"  ❌ 식단 크롤링 중 에러: {e}")
@@ -95,14 +91,17 @@ class MealCrawler(BaseCrawler):
                     meal_type = parts[0]
                     menu_category = parts[1].replace(")", "")
                 
-                # 교직원 식당 보정
-                if restaurant_name == "교직원식당" and "중식" in header:
-                    meal_type = "중식"
-                    menu_category = "일반"
-
-                menu_content = cols[i].get_text(separator="\n", strip=True)
+                # 텍스트 추출 시 줄바꿈 기준으로 분리 후 중복 제거 (반응형 웹의 중복 텍스트 방지)
+                raw_lines = cols[i].get_text(separator="\n", strip=True).split("\n")
+                unique_lines = []
+                for line in raw_lines:
+                    cleaned = line.strip()
+                    if cleaned and cleaned not in unique_lines and cleaned not in ["-", "등록된 식단이 없습니다."]:
+                        unique_lines.append(cleaned)
                 
-                if menu_content and len(menu_content) > 1 and menu_content not in ["-", "등록된 식단이 없습니다."]:
+                menu_content = "\n".join(unique_lines)
+                
+                if menu_content and len(menu_content) > 1:
                     print(f"    ✨ 발견: {date_val} | {meal_type}({menu_category}) | {restaurant_name}")
                     meals.append({
                         "date": date_val,

@@ -39,6 +39,41 @@ class SupabaseService:
             return None
 
     @staticmethod
+    def upsert_schedules(schedules: List[Dict]):
+        """
+        학사일정 데이터를 업서트합니다.
+        """
+        if not supabase:
+            return None
+
+        if not schedules:
+            return None
+
+        try:
+            response = supabase.table("schedules").upsert(
+                schedules,
+                on_conflict="start_date,end_date,title"
+            ).execute()
+            return response
+        except Exception as e:
+            print(f"Error upserting schedules: {e}")
+            return None
+
+    @staticmethod
+    def delete_meals_by_date_range(start_date: str, end_date: str):
+        """
+        특정 기간의 식단 데이터를 삭제합니다.
+        """
+        if not supabase:
+            return None
+        try:
+            response = supabase.table("meals").delete().gte("date", start_date).lte("date", end_date).execute()
+            return response
+        except Exception as e:
+            print(f"Error deleting meals: {e}")
+            return None
+
+    @staticmethod
     def fetch_meals(date: Optional[str] = None, meal_type: Optional[str] = None):
         """
         식단 데이터를 조회합니다.

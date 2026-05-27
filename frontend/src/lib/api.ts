@@ -43,7 +43,7 @@ function splitMenu(menuContent: string | null): string[] {
   return menuContent.split('\n').map((line) => line.trim()).filter(Boolean)
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // ──────────────────────────────────────────────────────────────────────────────
 // API Functions (Via Backend for CORS & Security)
@@ -54,7 +54,7 @@ export async function fetchSchedules(params?: {
   end?: string
   limit?: number
 }): Promise<Schedule[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/schedules`)
+  const url = new URL(`${API_BASE_URL}/api/data/schedules`, window.location.origin)
   if (params?.start) url.searchParams.append('start', params.start)
   if (params?.end) url.searchParams.append('end', params.end)
   if (params?.limit) url.searchParams.append('limit', params.limit.toString())
@@ -83,7 +83,7 @@ export async function fetchMeals(params?: {
   meal_type?: string
   limit?: number
 }): Promise<Meal[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/meals`)
+  const url = new URL(`${API_BASE_URL}/api/data/meals`, window.location.origin)
   if (params?.date) url.searchParams.append('date', params.date)
   if (params?.meal_type) url.searchParams.append('meal_type', params.meal_type)
   if (params?.limit) url.searchParams.append('limit', params.limit.toString())

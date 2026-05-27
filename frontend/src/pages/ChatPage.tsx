@@ -83,7 +83,7 @@ export default function ChatPage() {
     let fullReceivedText = ''
     let currentlyDisplayedText = ''
     let isMessageAdded = false
-    let typingInterval: NodeJS.Timeout | null = null
+    let typingInterval: ReturnType<typeof setInterval> | null = null
 
     try {
       // API 호출 형식에 맞춰 변환 (bot -> assistant)

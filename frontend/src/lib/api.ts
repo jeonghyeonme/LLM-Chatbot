@@ -1,5 +1,3 @@
-import { supabase } from './supabase'
-
 export interface Schedule {
   id: string
   title: string
@@ -23,7 +21,6 @@ export interface Meal {
 // ──────────────────────────────────────────────────────────────────────────────
 const EXCLUDE_KEYWORDS = ['수업일수', '학기개시']
 const EXAM_KEYWORD = '평가'
-const TARGET_RESTAURANT = '학생식당'
 
 const PRICE_MAP: Record<string, string> = {
   '조식|일반': '1,000원',
@@ -169,3 +166,4 @@ export async function sendMessage(
 
   return fullContent
 }
+

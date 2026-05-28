@@ -3,11 +3,10 @@
 ## 🏗️ 프로젝트 아키텍처 (Serverless Hybrid RAG)
 > *프로젝트 개발 진행 상황에 따라 기술 스택 및 DB 구조는 유연하게 변경될 수 있습니다.*
 
-- **정형 데이터 (JSON/DB)**: 식단표, 학사일정 등은 크롤링 후 Supabase DB 또는 JSON에 저장.
+- **정형 데이터 (JSON/DB)**: 식단표, 학사일정 등은 크롤링 후 Supabase DB에 저장. (프론트엔드에서 Supabase Client로 직접 조회하여 지연 시간 최소화)
 - **비정형 데이터 (Vector DB)**: 공지사항, FAQ 등은 **Supabase pgvector**에 임베딩하여 적재.
-- **LLM 엔진**: **Gemini 1.5 Flash**를 활용하여 비용 0원 유지 및 빠른 응답 생성. (더 적합한 모델 있으면 변경 가능)
-- **데이터 수집 (Crawler)**: **GitHub Actions** + `BeautifulSoup` (주기적 스케줄링 및 Supabase 직접 적재)
-- **정형 데이터 (JSON/DB)**: 식단표, 학사일정 등은 크롤링 후 Supabase DB에 저장.
+- **LLM 엔진**: **Gemini 1.5 Flash**를 활용하여 비용 0원 유지 및 빠른 응답 생성.
+- **데이터 수집 (Crawler)**: **GitHub Actions** + `Playwright`/`BeautifulSoup` (주기적 스케줄링 및 Supabase 직접 적재)
 
 ---
 
@@ -16,7 +15,7 @@
 ### 1. 데이터 수집 및 지식 베이스 (Data)
 - [x] **[D-1] GitHub Actions 기반 크롤링 자동화**
     - **대상**: 학교 홈페이지 학생식당 및 학사일정 페이지
-    - **기술**: Python (`requests`, `bs4`) + GitHub Actions Workflow 스케줄링
+    - **기술**: Python (`Playwright`, `bs4`) + GitHub Actions Workflow 스케줄링
     - **저장**: Supabase API를 통한 `meals`, `schedules` 테이블 직접 적재
 - [ ] **[D-2] 공지사항 벡터화 파이프라인**
     - **대상**: 일반공지 및 학과 게시판
@@ -27,9 +26,9 @@
     - **저장**: Supabase `facilities` 테이블 (장소명, 위치, 상세안내, 연락처)
 
 ### 2. 챗봇 지능 및 백엔드 고도화 (AI/API)
-- [ ] **[A-1] RESTful API 엔드포인트 상세 설계**
-    - **Data API**: DB 테이블별 CRUD 및 조회 엔드포인트 분리 (`/api/meals`, `/api/schedules`, `/api/facilities`)
-    - **Chat API**: `POST /api/chat` (인텐트 분석 및 답변 생성)
+- [ ] **[A-1] API 엔드포인트 설계 및 AI 통합**
+    - **Data Access**: 정형 데이터(식단, 일정 등)는 Supabase PostgREST(SDK)를 통해 프론트엔드에서 직접 조회
+    - **Chat API**: `POST /api/chat` (인텐트 분석 및 답변 생성 전담)
     - **Streaming**: 사용자 경험 개선을 위한 SSE(Server-Sent Events) 스트리밍 답변 구조 설계
     - **AI Integration**: Gemini 1.5 Flash API 연동 및 Function Calling 활용 설계
 - [ ] **[A-2] Gemini 라우팅 로직**
@@ -85,11 +84,14 @@
 - [x] React 프로젝트 초기화 및 Tailwind CSS 설정
 - [x] 챗봇 메인 인터페이스 및 웰컴 카드 기본 구현
 - [x] 인덕이 에셋 통합 및 페이지 내비게이션(Router) 구축
+- [x] 식단 정보 조회 페이지 구현 및 Supabase 연동
 
 ### 백엔드 (Backend)
 - [x] FastAPI 프로젝트 스캐폴딩 및 의존성 설정
 - [x] 환경 변수(.env) 및 공통 로깅 모듈 구축
 - [x] 기본 헬스체크 API 구현
+- [x] Playwright 기반 식단/일정 크롤러 구현 완료
+
 
 ---
 

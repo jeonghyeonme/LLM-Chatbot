@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import induckMascot from '../assets/induck-i.webp'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { sendMessage, type ChatMessage } from '../lib/api'
 
 /* * 챗봇 메시지 타입 정의
  * role: 'user' (사용자) | 'bot' (인덕이)
@@ -62,76 +63,97 @@ export default function ChatPage() {
     }
   }
 
-  /* 실시간 글자 타이핑 스트리밍 답변 시뮬레이션 함수 */
-  const simulateStreamingResponse = (fullText: string) => {
-    setIsTyping(false)
-    
-    /* 빈 봇 말풍선을 먼저 리스트 끝에 생성 */
-    const botMsg: Message = { role: 'bot', content: '' }
-    setMessages(prev => [...prev, botMsg])
-
-    let currentText = ''
-    let index = 0
-
-    /* 30ms 간격으로 글자를 한 자씩 쪼개 실시간 업데이트 */
-    const interval = setInterval(() => {
-      if (index < fullText.length) {
-        currentText += fullText[index]
-        setMessages(prev => {
-          const updated = [...prev]
-          updated[updated.length - 1] = { ...updated[updated.length - 1], content: currentText }
-          return updated
-        })
-        index++
-      } else {
-        clearInterval(interval)
-      }
-    }, 30)
-  }
-
-  /* 사용자의 질문을 분석하여 인하공전 맞춤형 리얼 데이터를 반환하는 함수 */
-  const getCustomBotResponse = (question: string): string => {
-    const cleanQuestion = question.trim();
-
-    if (cleanQuestion.includes('장학금') || cleanQuestion.includes('장학')) {
-      return `### 💰 인하공전 장학금 지급 안내\n\n학생분들을 위한 주요 장학금 혜택 및 신청 정보입니다.\n\n* **인하가족장학금:** 직계가족 2인 이상 재학 시 지급 (수업료의 50% 감면)\n* **성적우수장학금:** 학과별 성적 최우수자 및 우수자 선발 (수업료 전액 또는 일부 감면)\n* **복지장학금:** 한국장학재단 국가장학금 신청자 중 소득분위 연계 지급\n\n📌 **신청 방법:** 인하공전 종합정보시스템 로그인 ➡️ 등록/장학 메뉴 ➡️ 장학금 신청\n\n_※ 세부 일정 및 제출 서류는 대학 홈페이지 공지사항을 꼭 확인해 주세요!_`;
-    }
-
-    if (cleanQuestion.includes('식단') || cleanQuestion.includes('밥') || cleanQuestion.includes('메뉴')) {
-      return `### 🍱 오늘 학과식당 및 학생식당 식단\n\n인하공전 캠퍼스 내 식당 정보입니다.\n\n* **학생식당 (본관 지하 1층):**\n  - 백반 코너: 제육볶음 정식 (4,500원)\n  - 일품 코너: 돈까스 및 우동 세트 (5,000원)\n* **교직원식당 (인하관 1층):**\n  - 오늘의 한식 정식 (6,500원)\n\n⏰ **운영 시간:** 중식 11:30 ~ 13:30 / 석식 17:00 ~ 18:30`;
-    }
-
-    if (cleanQuestion.includes('일정') || cleanQuestion.includes('학사')) {
-      return `### 📅 주요 학사일정 안내\n\n올해 꼭 챙겨야 할 인하공전 학사일정 로드맵입니다.\n\n1. **중간고사 기간:** 4월 중순 예정\n2. **하계 방학 시작:** 6월 중순 예정\n3. **2학기 수강신청:** 8월 초 순\n\n정확한 주차별 세부 변동 사항은 좌측 상단의 **'📅 학사일정'** 메뉴로 이동하시면 달력 형식으로 더 자세히 보실 수 있습니다!`;
-    }
-
-    if (cleanQuestion.includes('맵') || cleanQuestion.includes('캠퍼스') || cleanQuestion.includes('위치')) {
-      return `### 🗺️ 인하공전 주요 건물 위치 안내\n\n길을 헤매는 학우분들을 위한 캠퍼스 핵심 가이드입니다.\n\n* **본관:** 학생 종합민원실, 학생식당, 교무처\n* **3호관/5호관:** 컴퓨터정보공학부 및 공학 계열 실습실\n* **도서관:** 본관 옆 위치, 열람실 및 자료실 운영\n\n자세한 가이드 인터페이스는 상단의 **'🗺️ 캠퍼스맵'** 메뉴 탭을 클릭하시면 실시간 맵뷰로 연동됩니다!`;
-    }
-
-    /* 기본 답변 */
-    return `### 🐥 인덕이 답변 도우미\n\n요청하신 **"${question}"**에 대한 답변입니다.\n\n현재 이 기능은 준비 중이거나 학습 대기 중인 상태입니다. 학사일정, 식단안내, 캠퍼스맵, 장학금 등을 입력하거나 하단 퀵 메뉴를 눌러보세요!`;
-  }
-
   /* 메시지 전송 핸들러 */
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const targetText = textToSend || input;
     if (!targetText.trim()) return
     
     /* 사용자 메시지 추가 */
     const userMsg: Message = { role: 'user', content: targetText }
-    setMessages(prev => [...prev, userMsg])
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
     
     if (!textToSend) {
       setInput('')
     }
     
-    /* 인덕이 응답 시뮬레이션 */
+    /* 인덕이 응답 호출 시작 */
     setIsTyping(true)
-    setTimeout(() => {
-      const customResponse = getCustomBotResponse(targetText)
-      simulateStreamingResponse(customResponse)
-    }, 1000)
+    
+    let fullReceivedText = ''
+    let currentlyDisplayedText = ''
+    let isMessageAdded = false
+    let typingInterval: ReturnType<typeof setInterval> | null = null
+
+    try {
+      // API 호출 형식에 맞춰 변환 (bot -> assistant)
+      const apiMessages: ChatMessage[] = updatedMessages.map(m => ({
+        role: m.role === 'bot' ? 'assistant' : 'user',
+        content: m.content
+      }))
+      
+      await sendMessage(apiMessages, (partialContent) => {
+        fullReceivedText = partialContent
+        
+        // 첫 데이터 수신 시 '생각 중' 상태 해제 및 메시지 박스 생성
+        if (!isMessageAdded && fullReceivedText.length > 0) {
+          isMessageAdded = true
+          setIsTyping(false)
+          setMessages(prev => [...prev, { role: 'bot', content: '' }])
+          
+          // 타이핑 시뮬레이션 시작
+          typingInterval = setInterval(() => {
+            if (currentlyDisplayedText.length < fullReceivedText.length) {
+              // 한 글자씩 추가 (실제 수신된 텍스트를 따라잡음)
+              currentlyDisplayedText += fullReceivedText[currentlyDisplayedText.length]
+              setMessages(prev => {
+                const updated = [...prev]
+                if (updated[updated.length - 1].role === 'bot') {
+                  updated[updated.length - 1] = { ...updated[updated.length - 1], content: currentlyDisplayedText }
+                }
+                return updated
+              })
+            } else if (!typingInterval) {
+              // 스트리밍이 끝났고 타이핑도 다 했으면 종료
+              clearInterval(typingInterval!)
+            }
+          }, 20) // 20ms 간격으로 부드럽게 출력
+        }
+      })
+      
+      // 스트리밍 종료 후 남은 텍스트가 있다면 모두 출력 보장
+      if (typingInterval) {
+        const finalizeInterval = setInterval(() => {
+          if (currentlyDisplayedText.length < fullReceivedText.length) {
+            currentlyDisplayedText += fullReceivedText[currentlyDisplayedText.length]
+            setMessages(prev => {
+              const updated = [...prev]
+              updated[updated.length - 1] = { ...updated[updated.length - 1], content: currentlyDisplayedText }
+              return updated
+            })
+          } else {
+            clearInterval(finalizeInterval)
+            clearInterval(typingInterval!)
+          }
+        }, 10)
+      }
+
+    } catch (err) {
+      console.error('Failed to get response:', err)
+      setIsTyping(false)
+      const errorMsgContent = '미안하덕! 서버와 연결하는 중에 문제가 생겼덕. 잠시 후 다시 시도해달덕!'
+      setMessages(prev => {
+        // 이미 메시지 박스가 추가되었다면 내용만 변경, 아니면 새로 추가
+        if (isMessageAdded) {
+          const updated = [...prev]
+          updated[updated.length - 1] = { role: 'bot', content: errorMsgContent }
+          return updated
+        }
+        return [...prev, { role: 'bot', content: errorMsgContent }]
+      })
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   /* [Vercel 빌드 보장용 함수] */

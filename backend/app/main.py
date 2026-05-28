@@ -1,16 +1,27 @@
+import sys
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# 프로젝트 루트 디렉토리(backend)를 path에 추가하여 core, app 등의 모듈을 찾을 수 있게 함
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from core.config import settings
 from core.logger import logger
+from app.routers import chat, data
 
 app = FastAPI(title=settings.PROJECT_NAME)
+
+# 라우터 등록
+app.include_router(chat.router)
+app.include_router(data.router)
 
 # CORS 설정: 프런트엔드 배포 주소 및 로컬 주소 허용
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://localhost:5174",
         "https://induck-it.vercel.app", # 필요시 실제 Vercel 주소로 변경
     ],
     allow_credentials=True,

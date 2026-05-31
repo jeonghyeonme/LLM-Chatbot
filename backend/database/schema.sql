@@ -25,9 +25,28 @@ CREATE TABLE IF NOT EXISTS schedules (
     UNIQUE (start_date, end_date, title)
 );
 
+-- 3. 공지사항 테이블 (notices)
+CREATE TABLE IF NOT EXISTS notices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    external_id TEXT NOT NULL,       -- 학교 홈페이지 게시글 번호 (nttId)
+    category TEXT NOT NULL,          -- 학사, 행사, 장학, 채용, 일반 등
+    title TEXT NOT NULL,             -- 공지 제목
+    content TEXT,                    -- 공지 본문 내용
+    author TEXT DEFAULT '관리자',     -- 작성 부서/작성자
+    date DATE NOT NULL,              -- 게시일
+    views INTEGER DEFAULT 0,         -- 조회수
+    attachments JSONB DEFAULT '[]',  -- 첨부파일 목록 [{"name": "...", "url": "..."}]
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    -- 게시판 종류와 게시글 번호 조합으로 유니크 제약
+    UNIQUE (category, external_id)
+);
+
 -- 인덱스 추가 (조회 성능 최적화)
 CREATE INDEX IF NOT EXISTS idx_meals_date ON meals(date);
 CREATE INDEX IF NOT EXISTS idx_schedules_start_date ON schedules(start_date);
+CREATE INDEX IF NOT EXISTS idx_notices_date ON notices(date DESC);
+CREATE INDEX IF NOT EXISTS idx_notices_category ON notices(category);
 
 -- ==========================================
 -- 🔒 RLS (Row Level Security) 설정 및 정책 추가
@@ -36,9 +55,9 @@ CREATE INDEX IF NOT EXISTS idx_schedules_start_date ON schedules(start_date);
 -- 1. 테이블의 RLS 기능 활성화
 ALTER TABLE meals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 
 -- 2. 누구나 읽을 수 있는(SELECT) 정책 생성
--- (anon_key를 가진 프론트엔드 접속자들도 데이터를 볼 수 있도록 허용)
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 식단표 조회 가능') THEN
@@ -46,6 +65,9 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 학사일정 조회 가능') THEN
         CREATE POLICY "누구나 학사일정 조회 가능" ON schedules FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 공지사항 조회 가능') THEN
+        CREATE POLICY "누구나 공지사항 조회 가능" ON notices FOR SELECT USING (true);
     END IF;
 END
 $$;

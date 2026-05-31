@@ -12,7 +12,9 @@ export default function Header() {
   // 내비게이션 메뉴 구성 데이터
   const navMenus = [
     { label: '🤖 챗봇', path: '/' },
+    { label: '📢 공지사항', path: '/notices' },
     { label: '📅 학사일정', path: '/calendar' },
+    { label: '💼 취업정보', path: '/careers' },
     { label: '🗺️ 캠퍼스맵', path: '/map' },
     { label: '🍱 식단안내',path: '/mealPlan'},
   ];

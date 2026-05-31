@@ -2,22 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header'
 import { fetchSchedules, type Schedule } from '../lib/api'
 
-/**
- * 공지사항 타입 정의 (DB에 테이블 없음 → 더미 유지)
- */
-interface Announcement {
-  category: string
-  title: string
-  date: string
-}
-
-// 공지사항 더미 데이터
-const ANNOUNCEMENTS: Announcement[] = [
-  { category: '학사', title: '2024학년도 2학기 전공교과목 수강 포기 안내', date: '2024.10.10' },
-  { category: '장학', title: '2024학년도 2학기 교내장학금 신청 안내', date: '2024.10.08' },
-  { category: '행사', title: '2024 인하 테크 페스티벌 개최 안내', date: '2024.10.05' },
-]
-
 // ──────────────────────────────────────────────────────────────────────────────
 // 날짜 헬퍼
 // ──────────────────────────────────────────────────────────────────────────────
@@ -34,7 +18,7 @@ const daysInMonth = (year: number, monthIdx: number) =>
   new Date(year, monthIdx + 1, 0).getDate()
 
 /**
- * 학사 일정 및 공지사항 페이지
+ * 학사 일정 페이지
  */
 export default function CalendarPage() {
   const days = ['일', '월', '화', '수', '목', '금', '토']
@@ -100,7 +84,7 @@ export default function CalendarPage() {
       <main className="flex-1 pt-24 pb-12 px-6 md:px-12 flex flex-col items-center">
         <div className="w-full max-w-6xl">
           <h1 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
-            📅 학사일정 및 공지사항
+            📅 학사일정
           </h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -174,7 +158,7 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            {/* 오른쪽 섹션: 일정 리스트 및 공지사항 */}
+            {/* 오른쪽 섹션: 일정 리스트 */}
             <div className="space-y-6">
               {/* 주요 학사일정 카드 */}
               <div className="bg-white rounded-inha-card border border-inha-border shadow-inha-card p-6">
@@ -203,32 +187,6 @@ export default function CalendarPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* 최신 공지사항 카드 (DB에 없음 → 더미 유지) */}
-              <div className="bg-white rounded-inha-card border border-inha-border shadow-inha-card p-6">
-                <h3 className="text-lg font-bold text-inha-blue mb-4 flex items-center gap-2">
-                  📢 최신 공지사항
-                </h3>
-                <div className="space-y-4">
-                  {ANNOUNCEMENTS.map((anno, idx) => (
-                    <div key={idx} className="group cursor-pointer">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] bg-inha-bg border border-inha-border px-1.5 py-0.5 rounded text-inha-text-sub group-hover:bg-inha-blue group-hover:text-white transition-colors">
-                          {anno.category}
-                        </span>
-                        <span className="text-xs text-inha-text-sub">{anno.date}</span>
-                      </div>
-                      <p className="text-sm text-inha-text-main line-clamp-1 group-hover:text-inha-blue transition-colors">
-                        {anno.title}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                {/* 공지사항 더보기 버튼 */}
-                <button className="w-full mt-6 py-2.5 text-sm font-semibold text-inha-text-sub bg-inha-bg hover:bg-inha-border rounded-lg transition-colors">
-                  공지사항 더보기
-                </button>
               </div>
             </div>
           </div>

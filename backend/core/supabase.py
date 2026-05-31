@@ -60,6 +60,58 @@ class SupabaseService:
             return None
 
     @staticmethod
+    def upsert_notices(notices: List[Dict]):
+        """
+        공지사항 및 취업 정보 데이터를 업서트합니다.
+        """
+        if not supabase or not notices:
+            return None
+
+        try:
+            response = supabase.table("notices").upsert(
+                notices,
+                on_conflict="category,external_id"
+            ).execute()
+            return response
+        except Exception as e:
+            print(f"Error upserting notices: {e}")
+            return None
+
+    @staticmethod
+    def fetch_notices(category: Optional[str] = None, limit: int = 20):
+        """
+        공지사항 데이터를 조회합니다.
+        """
+        if not supabase:
+            return []
+        
+        try:
+            query = supabase.table("notices").select("*")
+            if category:
+                query = query.eq("category", category)
+            
+            response = query.order("date", desc=True).limit(limit).execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching notices: {e}")
+            return []
+
+    @staticmethod
+    def fetch_notice_by_id(id: str):
+        """
+        특정 ID의 공지사항 상세 내용을 조회합니다.
+        """
+        if not supabase:
+            return None
+        
+        try:
+            response = supabase.table("notices").select("*").eq("id", id).single().execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching notice by id: {e}")
+            return None
+
+    @staticmethod
     def delete_meals_by_date_range(start_date: str, end_date: str):
         """
         특정 기간의 식단 데이터를 삭제합니다.

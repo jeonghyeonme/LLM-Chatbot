@@ -205,7 +205,8 @@ export default function ChatPage() {
   const quickMenus = [
     { label: '📅 학사일정', path: '/calendar' },
     { label: '🗺️ 캠퍼스맵', path: '/map' },
-    { label: '📢 공지사항', path: '/calendar' },
+    { label: '📢 공지사항', path: '/notices' },
+    { label: '💼 취업정보', path: '/careers' },
     { label: '🍱 식단안내', path: '/mealPlan' },
     { label: '💰 장학금', path: '#' },
     { label: '📚 도서관', path: '#' },

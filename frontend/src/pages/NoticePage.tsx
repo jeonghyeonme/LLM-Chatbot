@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import { Link } from 'react-router-dom';
-import { Search, Bell, ChevronRight, Filter } from 'lucide-react';
+import { Search, Bell, ChevronRight } from 'lucide-react';
 
 interface Notice {
   id: string;

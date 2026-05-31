@@ -42,11 +42,23 @@ CREATE TABLE IF NOT EXISTS notices (
     UNIQUE (category, external_id)
 );
 
+-- 4. 시설 및 장소 정보 테이블 (facilities)
+CREATE TABLE IF NOT EXISTS facilities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,              -- 건물/장소 명칭
+    latitude DOUBLE PRECISION NOT NULL, -- 위도
+    longitude DOUBLE PRECISION NOT NULL, -- 경도
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE (name)
+);
+
 -- 인덱스 추가 (조회 성능 최적화)
 CREATE INDEX IF NOT EXISTS idx_meals_date ON meals(date);
 CREATE INDEX IF NOT EXISTS idx_schedules_start_date ON schedules(start_date);
 CREATE INDEX IF NOT EXISTS idx_notices_date ON notices(date DESC);
 CREATE INDEX IF NOT EXISTS idx_notices_category ON notices(category);
+CREATE INDEX IF NOT EXISTS idx_facilities_name ON facilities(name);
 
 -- ==========================================
 -- 🔒 RLS (Row Level Security) 설정 및 정책 추가
@@ -56,6 +68,7 @@ CREATE INDEX IF NOT EXISTS idx_notices_category ON notices(category);
 ALTER TABLE meals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE facilities ENABLE ROW LEVEL SECURITY;
 
 -- 2. 누구나 읽을 수 있는(SELECT) 정책 생성
 DO $$
@@ -68,6 +81,9 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 공지사항 조회 가능') THEN
         CREATE POLICY "누구나 공지사항 조회 가능" ON notices FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 시설 정보 조회 가능') THEN
+        CREATE POLICY "누구나 시설 정보 조회 가능" ON facilities FOR SELECT USING (true);
     END IF;
 END
 $$;

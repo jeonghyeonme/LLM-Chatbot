@@ -167,22 +167,63 @@ export default function ChatPage() {
         return <h3 key={lineIdx} className="text-base font-bold text-inha-blue mt-2 mb-1">{renderedLine.replace('### ', '')}</h3>;
       }
       
-      /* ** 볼드체 처리 (정규식 교체) */
+      /* ** 볼드체 및 [링크](URL) 처리 (정규식 교체) */
       const boldRegex = /\*\*(.*?)\*\*/g;
-      const parts = [];
+      const linkRegex = /\[(.*?)\]\((.*?)\)/g;
+      const parts: (string | JSX.Element)[] = [];
       let lastIndex = 0;
+      
+      // 1. 먼저 링크와 볼드체를 아우르는 통합 파싱이 필요하지만, 
+      // 여기서는 순차적으로 처리하거나 더 정교한 루프를 사용합니다.
+      // 간단하게 하기 위해 renderedLine을 기반으로 링크부터 처리합니다.
+      
+      const combinedMatches: { index: number, length: number, element: JSX.Element }[] = [];
+      
+      // 링크 찾기
       let match;
-
-      while ((match = boldRegex.exec(renderedLine)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(renderedLine.substring(lastIndex, match.index));
-        }
-        parts.push(<strong key={match.index} className="font-bold text-inha-blue">{match[1]}</strong>);
-        lastIndex = boldRegex.lastIndex;
+      while ((match = linkRegex.exec(renderedLine)) !== null) {
+        combinedMatches.push({
+          index: match.index,
+          length: match[0].length,
+          element: (
+            <a 
+              key={`link-${match.index}`} 
+              href={match[2]} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-inha-blue underline hover:text-blue-700 font-medium"
+            >
+              {match[1]}
+            </a>
+          )
+        });
       }
       
-      if (lastIndex < renderedLine.length) {
-        parts.push(renderedLine.substring(lastIndex));
+      // 볼드체 찾기 (링크와 겹치지 않는 경우만)
+      while ((match = boldRegex.exec(renderedLine)) !== null) {
+        if (!combinedMatches.some(m => (match!.index >= m.index && match!.index < m.index + m.length))) {
+          combinedMatches.push({
+            index: match.index,
+            length: match[0].length,
+            element: <strong key={`bold-${match.index}`} className="font-bold text-inha-blue">{match[1]}</strong>
+          });
+        }
+      }
+      
+      // 인덱스 순으로 정렬
+      combinedMatches.sort((a, b) => a.index - b.index);
+      
+      let currentIdx = 0;
+      combinedMatches.forEach((m, i) => {
+        if (m.index > currentIdx) {
+          parts.push(renderedLine.substring(currentIdx, m.index));
+        }
+        parts.push(m.element);
+        currentIdx = m.index + m.length;
+      });
+      
+      if (currentIdx < renderedLine.length) {
+        parts.push(renderedLine.substring(currentIdx));
       }
 
       const finalLine = parts.length > 0 ? parts : renderedLine;

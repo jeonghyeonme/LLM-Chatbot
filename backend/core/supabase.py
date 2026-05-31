@@ -166,3 +166,42 @@ class SupabaseService:
         except Exception as e:
             print(f"Error fetching schedules: {e}")
             return []
+
+    @staticmethod
+    def upsert_facilities(facilities: List[Dict]):
+        """
+        시설 및 장소 데이터를 업서트합니다.
+        """
+        if not supabase or not facilities:
+            return None
+
+        try:
+            response = supabase.table("facilities").upsert(
+                facilities,
+                on_conflict="name"
+            ).execute()
+            return response
+        except Exception as e:
+            print(f"Error upserting facilities: {e}")
+            return None
+
+    @staticmethod
+    def fetch_facilities(category: Optional[str] = None, name: Optional[str] = None):
+        """
+        시설 정보를 조회합니다.
+        """
+        if not supabase:
+            return []
+        
+        try:
+            query = supabase.table("facilities").select("*")
+            if category:
+                query = query.eq("category", category)
+            if name:
+                query = query.ilike("name", f"%{name}%")
+            
+            response = query.order("name").execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching facilities: {e}")
+            return []

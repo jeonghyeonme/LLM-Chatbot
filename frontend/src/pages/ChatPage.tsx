@@ -170,14 +170,13 @@ export default function ChatPage() {
       /* ** 볼드체 및 [링크](URL) 처리 (정규식 교체) */
       const boldRegex = /\*\*(.*?)\*\*/g;
       const linkRegex = /\[(.*?)\]\((.*?)\)/g;
-      const parts: (string | JSX.Element)[] = [];
-      let lastIndex = 0;
+      const parts: React.ReactNode[] = [];
       
       // 1. 먼저 링크와 볼드체를 아우르는 통합 파싱이 필요하지만, 
       // 여기서는 순차적으로 처리하거나 더 정교한 루프를 사용합니다.
       // 간단하게 하기 위해 renderedLine을 기반으로 링크부터 처리합니다.
       
-      const combinedMatches: { index: number, length: number, element: JSX.Element }[] = [];
+      const combinedMatches: { index: number, length: number, element: React.ReactNode }[] = [];
       
       // 링크 찾기
       let match;
@@ -214,7 +213,7 @@ export default function ChatPage() {
       combinedMatches.sort((a, b) => a.index - b.index);
       
       let currentIdx = 0;
-      combinedMatches.forEach((m, i) => {
+      combinedMatches.forEach((m) => {
         if (m.index > currentIdx) {
           parts.push(renderedLine.substring(currentIdx, m.index));
         }

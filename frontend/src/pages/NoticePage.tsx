@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Link } from 'react-router-dom';
-import { Search, Bell, ChevronRight } from 'lucide-react';
+import { Search, Bell, ChevronRight, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase'; 
 
 interface Notice {
-  id: string;
+  id: string; 
   category: string;
   title: string;
   author: string;
@@ -12,24 +13,63 @@ interface Notice {
   views: number;
 }
 
-const DUMMY_NOTICES: Notice[] = [
-  { id: '1', category: '학사', title: '2024학년도 겨울계절학기 수강신청 안내', author: '교무처', date: '2026-05-30', views: 124 },
-  { id: '2', category: '장학', title: '2026학년도 2학기 국가장학금 1차 신청 안내', author: '학생처', date: '2026-05-28', views: 450 },
-  { id: '3', category: '일반', title: '캠퍼스 내 전동킥보드 안전 수칙 안내', author: '총무처', date: '2026-05-25', views: 89 },
-  { id: '4', category: '취업', title: '[공지] 대기업 직무 역량 강화 캠프 참가자 모집', author: '취창업지원센터', date: '2026-05-22', views: 210 },
-  { id: '5', category: '행사', title: '2026 인하공전 동아리 박람회 개최 안내', author: '학생자치기구', date: '2026-05-20', views: 156 },
-];
-
 const NoticePage: React.FC = () => {
+  const [notices, setNotices] = useState<Notice[]>([]); 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('전체');
+  const [loading, setLoading] = useState(true); 
 
   const categories = ['전체', '학사', '장학', '일반', '취업', '행사'];
 
-  const filteredNotices = DUMMY_NOTICES.filter(notice => 
-    (activeTab === '전체' || notice.category === activeTab) &&
-    (notice.title.includes(searchQuery) || notice.author.includes(searchQuery))
-  );
+  {/* Supabase 실시간 공지사항 연동 Fetcher */}
+  
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from('notices')
+          .select('id, category, title, author, date, views')
+          .order('date', { ascending: false });
+
+        if (error) throw error;
+
+        if (data) {
+          const formattedData = data.map((item: any) => ({
+            id: String(item.id), 
+            category: item.category || '일반',
+            title: item.title || '제목 없음',
+            author: item.author || '관리자',
+            date: item.date || '2026-06-05',
+            views: item.views || 0,
+          }));
+          setNotices(formattedData);
+        }
+      } catch (err) {
+        console.error('Supabase 공지사항 로드 에러:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotices();
+  }, []);
+
+  
+  const filteredNotices = notices.filter(notice => {
+
+    const matchesTab = activeTab === '전체' || notice.category === activeTab;
+    
+
+    const cleanQuery = searchQuery.replace(/\s+/g, '').toLowerCase();
+    const cleanTitle = (notice.title || '').replace(/\s+/g, '').toLowerCase();
+    const cleanAuthor = (notice.author || '').replace(/\s+/g, '').toLowerCase();
+
+    const matchesSearch = cleanTitle.includes(cleanQuery) || cleanAuthor.includes(cleanQuery);
+
+    return matchesTab && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
@@ -86,14 +126,19 @@ const NoticePage: React.FC = () => {
             </div>
             
             <div className="divide-y divide-inha-border">
-              {filteredNotices.length > 0 ? (
+              {loading ? (
+                <div className="py-20 text-center text-gray-400 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="w-8 h-8 text-inha-blue animate-spin" />
+                  <p className="text-sm">데이터를 안전하게 불러오는 중입니다...</p>
+                </div>
+              ) : filteredNotices.length > 0 ? (
                 filteredNotices.map((notice, idx) => (
                   <Link 
                     key={notice.id} 
                     to={`/notices/${notice.id}`}
                     className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 p-4 md:items-center hover:bg-gray-50 transition-colors group"
                   >
-                    <div className="hidden md:block col-span-1 text-center text-sm text-gray-400">{DUMMY_NOTICES.length - idx}</div>
+                    <div className="hidden md:block col-span-1 text-center text-sm text-gray-400">{filteredNotices.length - idx}</div>
                     <div className="col-span-2 flex justify-start md:justify-center">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         notice.category === '학사' ? 'bg-blue-100 text-blue-600' :

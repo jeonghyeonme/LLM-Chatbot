@@ -31,11 +31,10 @@ const NoticeDetailPage: React.FC = () => {
       try {
         setLoading(true);
 
-       
         const { data, error } = await supabase
           .from('notices')
           .select('*')
-          .eq('id', Number(id))
+          .eq('id', id)
           .single();
 
         if (error) throw error;
@@ -47,20 +46,21 @@ const NoticeDetailPage: React.FC = () => {
             title: data.title || '제목 없음',
             author: data.author || '관리자',
             date: data.date || '2026-06-05',
-            views: (data.views || 0) + 1, 
+            views: (data.views || 0) + 1,
             content: data.content || '본문 내용이 존재하지 않습니다.',
-            attachments: data.attachments || [
-              { name: '공지사항_첨부파일_안내문.pdf', size: '1.2MB' },
-              { name: '서식_개설과목_리스트.xlsx', size: '450KB' }
-            ]
+            attachments: Array.isArray(data.attachments) && data.attachments.length > 0 
+              ? data.attachments.map((file: any) => ({
+                  name: file.name || '첨부파일',
+                  size: file.size || '알 수 없음'
+                }))
+              : []
           };
           setNotice(detailData);
 
-         
           await supabase
             .from('notices')
             .update({ views: (data.views || 0) + 1 })
-            .eq('id', Number(id));
+            .eq('id', id);
         }
       } catch (err) {
         console.error('상세 본문 로드 에러:', err);

@@ -27,3 +27,14 @@ async def get_meals(
     """
     meals = SupabaseService.fetch_meals(date=date, meal_type=meal_type)
     return meals[:limit]
+
+@router.get("/facilities")
+async def get_facilities(
+    name: Optional[str] = Query(None),
+    limit: int = Query(100)
+):
+    """
+    캠퍼스 시설 정보를 조회합니다.
+    """
+    facilities = SupabaseService.fetch_facilities(name=name)
+    return facilities[:limit]

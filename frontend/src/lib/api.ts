@@ -16,6 +16,13 @@ export interface Meal {
   price: string
 }
 
+export interface Facility {
+  id: string
+  name: string
+  latitude: number
+  longitude: number
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Configuration Constants (Same as Backend)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -104,6 +111,33 @@ export async function fetchMeals(params?: {
     restaurant_type: r.restaurant_type,
     menu_items: splitMenu(r.menu_content),
     price: resolvePrice(r.meal_type, r.menu_category),
+  }))
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Facilities API
+// ──────────────────────────────────────────────────────────────────────────────
+
+export async function fetchFacilities(params?: {
+  name?: string
+  limit?: number
+}): Promise<Facility[]> {
+  const url = new URL(`${API_BASE_URL}/api/data/facilities`, window.location.origin)
+  if (params?.name) url.searchParams.append('name', params.name)
+  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
+
+  const response = await fetch(url.toString())
+  if (!response.ok) {
+    console.error('Failed to fetch facilities')
+    throw new Error('Failed to fetch facilities')
+  }
+
+  const data = await response.json()
+  return (data || []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    latitude: r.latitude,
+    longitude: r.longitude,
   }))
 }
 

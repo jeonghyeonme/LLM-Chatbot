@@ -28,19 +28,19 @@ def main():
     print("📢 공지사항 수집 중...")
     notices_to_save = []
     
-    # 수집 대상 정의 (menu_id, bbs_id, category_name)
+    # 수집 대상 정의 (menu_id, category_name)
     targets = [
-        ("461", "2", "학사"),
-        ("464", "2", "행사"),
-        ("463", "2", "장학"),
-        ("465", "2", "채용"),
-        ("466", "2", "일반"),
+        ("461", "학사"),
+        ("464", "행사"),
+        ("463", "장학"),
+        ("465", "채용"),
+        ("466", "일반"),
     ]
     
-    for menu_id, bbs_id, cat in targets:
+    for menu_id, cat in targets:
         try:
-            crawler = NoticeCrawler(menu_id, bbs_id, cat)
-            items = crawler.fetch_notices(limit=10)
+            crawler = NoticeCrawler(menu_id, cat)
+            items = crawler.fetch_notices(limit=20)
             notices_to_save.extend(items)
             print(f"   - {cat}: {len(items)}개 수집")
         except Exception as e:

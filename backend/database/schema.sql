@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS notices (
     external_id TEXT NOT NULL,       -- 학교 홈페이지 게시글 번호 (nttId)
     category TEXT NOT NULL,          -- 학사, 행사, 장학, 채용, 일반 등
     title TEXT NOT NULL,             -- 공지 제목
-    content TEXT,                    -- 공지 본문 내용
+    url TEXT,                        -- 공지 원본 상세 페이지 URL
     author TEXT DEFAULT '관리자',     -- 작성 부서/작성자
     date DATE NOT NULL,              -- 게시일
     views INTEGER DEFAULT 0,         -- 조회수

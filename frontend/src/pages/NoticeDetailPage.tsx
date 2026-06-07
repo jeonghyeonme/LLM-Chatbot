@@ -1,37 +1,100 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { ArrowLeft, Calendar, Eye, User, Share2, Download } from 'lucide-react';
+import { ArrowLeft, Calendar, Eye, User, Share2, Download, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase'; 
+
+interface NoticeDetail {
+  id: string;
+  category: string;
+  title: string;
+  author: string;
+  date: string;
+  views: number;
+  content: string;
+  attachments: { name: string; size: string }[];
+}
 
 const NoticeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // 실제로는 API에서 id를 기반으로 데이터를 가져와야 함
-  const notice = {
-    id: id,
-    category: '학사',
-    title: '2024학년도 겨울계절학기 수강신청 안내',
-    author: '교무처',
-    date: '2026-05-30',
-    views: 124,
-    content: `
-      안녕하세요, 교무처입니다. 
-      2024학년도 겨울계절학기 수강신청 일정을 다음과 같이 안내드립니다.
 
-      1. 수강신청 기간: 2026년 6월 10일(수) ~ 6월 12일(금)
-      2. 대상: 본교 재학생 및 휴학생
-      3. 수강신청 방법: 학교 통합정보시스템 접속 후 신청
-      4. 수강료 납부 기간: 2026년 6월 17일(수) ~ 6월 19일(금)
+  const [notice, setNotice] = useState<NoticeDetail | null>(null);
+  const [loading, setLoading] = useState(true);
 
-      자세한 사항은 첨부파일을 확인해 주시기 바랍니다.
-      학생 여러분의 많은 참여 바랍니다.
-    `,
-    attachments: [
-      { name: '2024_겨울계절학기_안내문.pdf', size: '1.2MB' },
-      { name: '계절학기_개설과목_리스트.xlsx', size: '450KB' }
-    ]
-  };
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchNoticeDetail = async () => {
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from('notices')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const detailData: NoticeDetail = {
+            id: String(data.id),
+            category: data.category || '일반',
+            title: data.title || '제목 없음',
+            author: data.author || '관리자',
+            date: data.date || '2026-06-05',
+            views: (data.views || 0) + 1,
+            content: data.content || '본문 내용이 존재하지 않습니다.',
+            attachments: Array.isArray(data.attachments) && data.attachments.length > 0 
+              ? data.attachments.map((file: any) => ({
+                  name: file.name || '첨부파일',
+                  size: file.size || '알 수 없음'
+                }))
+              : []
+          };
+          setNotice(detailData);
+
+          await supabase
+            .from('notices')
+            .update({ views: (data.views || 0) + 1 })
+            .eq('id', id);
+        }
+      } catch (err) {
+        console.error('상세 본문 로드 에러:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNoticeDetail();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
+          <Loader2 className="w-8 h-8 text-inha-blue animate-spin" />
+          <p className="text-sm text-gray-500">본문 내용을 안전하게 가져오는 중입니다...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!notice) {
+    return (
+      <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
+          <p className="text-gray-500">존재하지 않는 공지사항 게시글입니다.</p>
+          <button onClick={() => navigate('/notices')} className="px-4 py-2 bg-inha-blue text-white rounded-xl text-sm">목록으로</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
@@ -40,7 +103,7 @@ const NoticeDetailPage: React.FC = () => {
       <main className="flex-1 pt-24 pb-12 px-6 md:px-12 flex flex-col items-center">
         <div className="w-full max-w-4xl">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/notices')}
             className="flex items-center gap-2 text-inha-text-sub hover:text-inha-blue transition-colors mb-6 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

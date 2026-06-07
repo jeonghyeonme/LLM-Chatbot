@@ -1,48 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import { Link } from 'react-router-dom';
-import { Search, Bell, ChevronRight, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase'; 
+import { Search, Bell, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface Notice {
-  id: string; 
+  id: string;
   category: string;
   title: string;
   author: string;
   date: string;
   views: number;
+  url: string; 
 }
 
 const NoticePage: React.FC = () => {
-  const [notices, setNotices] = useState<Notice[]>([]); 
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('전체');
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
   const categories = ['전체', '학사', '장학', '일반', '취업', '행사'];
 
-  {/* Supabase 실시간 공지사항 연동 Fetcher */}
-  
   useEffect(() => {
     const fetchNotices = async () => {
       try {
         setLoading(true);
-
+        // 💡 팀장님의 최신 DB 스키마 컬럼 유실을 방지하기 위해 전체 와일드카드(*) 호출
         const { data, error } = await supabase
           .from('notices')
-          .select('id, category, title, author, date, views')
+          .select('*')
           .order('date', { ascending: false });
 
         if (error) throw error;
 
         if (data) {
           const formattedData = data.map((item: any) => ({
-            id: String(item.id), 
+            id: String(item.id),
             category: item.category || '일반',
             title: item.title || '제목 없음',
             author: item.author || '관리자',
             date: item.date || '2026-06-05',
             views: item.views || 0,
+            url: item.url || '#', 
           }));
           setNotices(formattedData);
         }
@@ -56,12 +55,10 @@ const NoticePage: React.FC = () => {
     fetchNotices();
   }, []);
 
-  
+  // 💡 명세서 기술 규격: 대소문자/공백 무시 초정밀 검색 엔진
   const filteredNotices = notices.filter(notice => {
-
     const matchesTab = activeTab === '전체' || notice.category === activeTab;
     
-
     const cleanQuery = searchQuery.replace(/\s+/g, '').toLowerCase();
     const cleanTitle = (notice.title || '').replace(/\s+/g, '').toLowerCase();
     const cleanAuthor = (notice.author || '').replace(/\s+/g, '').toLowerCase();
@@ -70,6 +67,15 @@ const NoticePage: React.FC = () => {
 
     return matchesTab && matchesSearch;
   });
+
+  // 💡 정현 팀장님 오더 사항: 클릭 시 실제 공지사항 주소로 새 창 리다이렉트
+  const handleNoticeClick = (url: string) => {
+    if (url && url !== '#') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('해당 공지사항의 원본 링크가 존재하지 않습니다.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
@@ -98,16 +104,13 @@ const NoticePage: React.FC = () => {
             </div>
           </div>
 
-          {/* 카테고리 탭 */}
           <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-6">
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveTab(cat)}
                 className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeTab === cat 
-                    ? 'bg-inha-blue text-white shadow-md' 
-                    : 'bg-white text-gray-600 border border-inha-border hover:border-inha-blue/30'
+                  activeTab === cat ? 'bg-inha-blue text-white shadow-md' : 'bg-white text-gray-600 border border-inha-border hover:border-inha-blue/30'
                 }`}
               >
                 {cat}
@@ -115,7 +118,6 @@ const NoticePage: React.FC = () => {
             ))}
           </div>
 
-          {/* 공지사항 목록 */}
           <div className="bg-white rounded-inha-card border border-inha-border shadow-inha-card overflow-hidden">
             <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-inha-border text-xs font-bold text-gray-500 uppercase tracking-wider">
               <div className="col-span-1 text-center">번호</div>
@@ -133,10 +135,10 @@ const NoticePage: React.FC = () => {
                 </div>
               ) : filteredNotices.length > 0 ? (
                 filteredNotices.map((notice, idx) => (
-                  <Link 
+                  <div 
                     key={notice.id} 
-                    to={`/notices/${notice.id}`}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 p-4 md:items-center hover:bg-gray-50 transition-colors group"
+                    onClick={() => handleNoticeClick(notice.url)}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 p-4 md:items-center hover:bg-gray-50 transition-colors group cursor-pointer"
                   >
                     <div className="hidden md:block col-span-1 text-center text-sm text-gray-400">{filteredNotices.length - idx}</div>
                     <div className="col-span-2 flex justify-start md:justify-center">
@@ -149,8 +151,9 @@ const NoticePage: React.FC = () => {
                         {notice.category}
                       </span>
                     </div>
-                    <div className="col-span-5 text-sm md:text-base font-medium text-gray-900 group-hover:text-inha-blue transition-colors truncate">
+                    <div className="col-span-5 text-sm md:text-base font-medium text-gray-900 group-hover:text-inha-blue transition-colors truncate flex items-center gap-1.5">
                       {notice.title}
+                      <ExternalLink className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="col-span-2 text-center text-xs md:text-sm text-gray-500">{notice.author}</div>
                     <div className="col-span-2 text-center text-xs md:text-sm text-gray-400">{notice.date}</div>
@@ -158,7 +161,7 @@ const NoticePage: React.FC = () => {
                       <span className="text-[10px] text-gray-400">조회수 {notice.views}</span>
                       <ChevronRight className="w-4 h-4 text-gray-300" />
                     </div>
-                  </Link>
+                  </div>
                 ))
               ) : (
                 <div className="py-20 text-center text-gray-400">
@@ -167,13 +170,6 @@ const NoticePage: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
-          
-          {/* 페이지네이션 (더미) */}
-          <div className="flex justify-center mt-8 gap-2">
-            <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-inha-border bg-white text-gray-400 hover:bg-gray-50">1</button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-transparent text-gray-400 hover:bg-gray-50">2</button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-transparent text-gray-400 hover:bg-gray-50">3</button>
           </div>
         </div>
       </main>

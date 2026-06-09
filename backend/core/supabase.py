@@ -62,7 +62,7 @@ class SupabaseService:
     @staticmethod
     def upsert_notices(notices: List[Dict]):
         """
-        공지사항 및 취업 정보 데이터를 업서트합니다.
+        공지사항 데이터를 업서트합니다.
         """
         if not supabase or not notices:
             return None
@@ -75,6 +75,24 @@ class SupabaseService:
             return response
         except Exception as e:
             print(f"Error upserting notices: {e}")
+            return None
+
+    @staticmethod
+    def upsert_careers(careers: List[Dict]):
+        """
+        취업 및 추천채용 데이터를 업서트합니다.
+        """
+        if not supabase or not careers:
+            return None
+
+        try:
+            response = supabase.table("careers").upsert(
+                careers,
+                on_conflict="category,external_id"
+            ).execute()
+            return response
+        except Exception as e:
+            print(f"Error upserting careers: {e}")
             return None
 
     @staticmethod
@@ -94,6 +112,21 @@ class SupabaseService:
             return response.data
         except Exception as e:
             print(f"Error fetching notices: {e}")
+            return []
+
+    @staticmethod
+    def fetch_careers(limit: int = 20):
+        """
+        취업 정보를 조회합니다.
+        """
+        if not supabase:
+            return []
+        
+        try:
+            response = supabase.table("careers").select("*").order("date", desc=True).limit(limit).execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching careers: {e}")
             return []
 
     @staticmethod

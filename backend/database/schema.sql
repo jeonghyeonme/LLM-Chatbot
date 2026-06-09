@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS notices (
     author TEXT DEFAULT '관리자',     -- 작성 부서/작성자
     date DATE NOT NULL,              -- 게시일
     views INTEGER DEFAULT 0,         -- 조회수
+    content TEXT,                    -- 상세 본문 내용 (Markdown)
     attachments JSONB DEFAULT '[]',  -- 첨부파일 목록 [{"name": "...", "url": "..."}]
     created_at TIMESTAMPTZ DEFAULT NOW(),
     

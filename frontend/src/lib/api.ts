@@ -23,6 +23,18 @@ export interface Facility {
   longitude: number
 }
 
+export interface Career {
+  id: string
+  external_id: string
+  category: string
+  title: string
+  content: string
+  url: string
+  date: string
+  views: number
+  attachments: any[]
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Configuration Constants (Same as Backend)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -139,6 +151,52 @@ export async function fetchFacilities(params?: {
     latitude: r.latitude,
     longitude: r.longitude,
   }))
+}
+
+export async function fetchCareers(params?: {
+  category?: string
+  limit?: number
+}): Promise<Career[]> {
+  const url = new URL(`${API_BASE_URL}/api/data/careers`, window.location.origin)
+  if (params?.category) url.searchParams.append('category', params.category)
+  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
+
+  const response = await fetch(url.toString())
+  if (!response.ok) {
+    console.error('Failed to fetch careers')
+    throw new Error('Failed to fetch careers')
+  }
+
+  return response.json()
+}
+
+export async function fetchCareerCategories(): Promise<string[]> {
+  const url = new URL(`${API_BASE_URL}/api/data/careers/categories`, window.location.origin)
+  const response = await fetch(url.toString())
+  if (!response.ok) {
+    console.error('Failed to fetch career categories')
+    throw new Error('Failed to fetch career categories')
+  }
+  return response.json()
+}
+
+export async function fetchDirections(params: {
+  start: string
+  goal: string
+  option?: string
+}): Promise<any> {
+  const url = new URL(`${API_BASE_URL}/api/data/directions`, window.location.origin)
+  url.searchParams.append('start', params.start)
+  url.searchParams.append('goal', params.goal)
+  if (params.option) url.searchParams.append('option', params.option)
+
+  const response = await fetch(url.toString())
+  if (!response.ok) {
+    console.error('Failed to fetch directions')
+    throw new Error('Failed to fetch directions')
+  }
+
+  return response.json()
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

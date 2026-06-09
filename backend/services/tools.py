@@ -63,4 +63,46 @@ def get_campus_location(building_name: str):
     
     return f"장소: {name}\n지도 링크: {map_link}\n좌표: {lat}, {lng}"
 
-tools = [get_campus_meals, get_campus_schedules, get_campus_location]
+import google.generativeai as genai
+import requests
+from io import BytesIO
+from PIL import Image
+
+@tool
+def analyze_notice_image(image_url: str):
+    """
+    공지사항 본문에 포함된 이미지 중 텍스트 정보가 핵심인 이미지(모집 포스터, 안내문, 시간표, 인포그래픽 등)를 분석합니다.
+    
+    [사용 지침]
+    1. 본문의 이미지 마크다운 ![alt](url) 에서 alt 텍스트가 '안내문', '포스터', '공고' 등 정보를 암시할 때 사용하세요.
+    2. 단순한 행사 현장 사진, 인물 사진, 풍경 사진 등 텍스트 정보가 없는 이미지에는 이 도구를 사용하지 마세요.
+    3. 질문에 답하기 위해 이미지 속 구체적인 수치나 조건(날짜, 인원, 자격 등)이 꼭 필요할 때만 호출하세요.
+    
+    image_url: 분석할 이미지의 전체 URL
+    """
+    if not image_url.startswith("http"):
+        # 상대 경로인 경우 기본 도메인 추가 (인하공전 기준)
+        if image_url.startswith("/"):
+            image_url = f"https://www.inhatc.ac.kr{image_url}"
+        else:
+            return "유효하지 않은 이미지 URL입니다."
+
+    try:
+        # 1. 이미지 다운로드
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            "Referer": "https://www.inhatc.ac.kr/"
+        }
+        response = requests.get(image_url, headers=headers, timeout=10)
+        img = Image.open(BytesIO(response.content))
+
+        # 2. Gemini 1.5 Flash를 이용한 멀티모달 분석
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = "이 이미지에 포함된 모든 텍스트 정보를 추출하고, 어떤 안내문인지 상세히 설명해줘. 만약 표나 일정이 있다면 구조화해서 알려줘."
+        
+        vision_res = model.generate_content([prompt, img])
+        return vision_res.text
+    except Exception as e:
+        return f"이미지 분석 중 오류가 발생했습니다: {e}"
+
+tools = [get_campus_meals, get_campus_schedules, get_campus_location, analyze_notice_image]

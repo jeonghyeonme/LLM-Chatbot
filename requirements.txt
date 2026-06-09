@@ -6,8 +6,7 @@ requests
 beautifulsoup4
 supabase
 langchain
-langchain-openai
-openai
+langchain-core
 google-generativeai
 langchain-google-genai
 httpx

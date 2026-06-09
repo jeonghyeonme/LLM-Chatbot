@@ -1,65 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import { Briefcase, Building, MapPin, ExternalLink, Search, TrendingUp, Calendar } from 'lucide-react';
+import { Briefcase, Building, ExternalLink, Search, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-interface CareerInfo {
+interface Career {
   id: string;
-  company: string;
+  category: string;
   title: string;
-  location: string;
-  type: string; // '신입', '경력', '인턴'
-  deadline: string;
-  link: string;
-  tags: string[];
+  url: string;
+  date: string;
 }
-
-const DUMMY_CAREERS: CareerInfo[] = [
-  { 
-    id: '1', 
-    company: '대한항공', 
-    title: '2026년 하반기 항공정비 부문 신입 채용', 
-    location: '인천/김포', 
-    type: '신입', 
-    deadline: '2026-06-15', 
-    link: 'https://recruit.koreanair.com',
-    tags: ['항공정비', '대기업', '우대']
-  },
-  { 
-    id: '2', 
-    company: '인천국제공항공사', 
-    title: '제15기 체험형 인턴 모집 공고', 
-    location: '인천 영종도', 
-    type: '인턴', 
-    deadline: '2026-06-20', 
-    link: 'https://airport.re.kr',
-    tags: ['공기업', '인턴', '가점']
-  },
-  { 
-    id: '3', 
-    company: '삼성전자', 
-    title: '반도체 설비/제조부문 생산직 채용', 
-    location: '평택/화성', 
-    type: '신입', 
-    deadline: '2026-06-10', 
-    link: 'https://samsungcareers.com',
-    tags: ['반도체', '생산직', '대기업']
-  },
-  { 
-    id: '4', 
-    company: '현대자동차', 
-    title: '자동차 정비 및 서비스 어드바이저 모집', 
-    location: '전국', 
-    type: '신입/경력', 
-    deadline: '채용시 마감', 
-    link: 'https://recruit.hyundai.com',
-    tags: ['자동차', '정비', '서비스']
-  },
-];
 
 const CareerPage: React.FC = () => {
   const [activeDept, setActiveDept] = useState('전체');
+  const [careers, setCareers] = useState<Career[]>([]);
+  const [departments, setDepartments] = useState<string[]>(['전체']);
+  const [loading, setLoading] = useState(true);
 
-  const departments = ['전체', '항공기계과', '컴퓨터정보과', '전기정보과', '기계설계과', '메카트로닉스과'];
+  // 학과 카테고리 로드 (Supabase 직접 접근)
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('careers')
+          .select('category');
+        
+        if (error) throw error;
+        
+        if (data) {
+          const uniqueCats = Array.from(new Set(data.map(item => item.category)));
+          setDepartments(['전체', ...uniqueCats.sort()]);
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // 공고 데이터 로드 (Supabase 직접 접근)
+  useEffect(() => {
+    const loadCareers = async () => {
+      setLoading(true);
+      try {
+        let query = supabase.from('careers').select('*').order('date', { ascending: false });
+        
+        if (activeDept !== '전체') {
+          query = query.eq('category', activeDept);
+        }
+
+        const { data, error } = await query.limit(50);
+        if (error) throw error;
+        setCareers(data || []);
+      } catch (error) {
+        console.error('Failed to load careers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCareers();
+  }, [activeDept]);
 
   return (
     <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
@@ -85,17 +86,8 @@ const CareerPage: React.FC = () => {
                     <TrendingUp className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs text-blue-200">금주 신규 공고</p>
-                    <p className="text-xl font-bold">12건</p>
-                  </div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Building className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200">주요 협약 기업</p>
-                    <p className="text-xl font-bold">45개</p>
+                    <p className="text-xs text-blue-200">전체 공고</p>
+                    <p className="text-xl font-bold">{careers.length}건</p>
                   </div>
                 </div>
               </div>
@@ -108,7 +100,7 @@ const CareerPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* 사이드바: 학과 필터 */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-inha-card border border-inha-border p-6 sticky top-28">
+              <div className="bg-white rounded-inha-card border border-inha-border p-6 sticky top-28 h-fit max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Search className="w-5 h-5 text-inha-blue" />
                   학과별 필터
@@ -128,12 +120,6 @@ const CareerPage: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                <div className="mt-8 pt-6 border-t border-inha-border">
-                  <button className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 text-inha-text-sub text-sm font-bold rounded-xl hover:bg-gray-100 transition-colors">
-                    <ExternalLink className="w-4 h-4" />
-                    워크넷 바로가기
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -141,71 +127,63 @@ const CareerPage: React.FC = () => {
             <div className="lg:col-span-3 space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">
-                  실시간 채용 공고 <span className="text-inha-blue text-sm ml-2">{DUMMY_CAREERS.length}건</span>
+                  {activeDept} 채용 공고 <span className="text-inha-blue text-sm ml-2">{careers.length}건</span>
                 </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">최신순</span>
-                  <div className="w-px h-3 bg-gray-300"></div>
-                  <span className="text-xs text-gray-400">마감순</span>
+              </div>
+
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-4">
+                  <Loader2 className="w-10 h-10 animate-spin text-inha-blue" />
+                  <p className="font-medium">취업 정보를 불러오는 중입니다...</p>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {DUMMY_CAREERS.map(job => (
-                  <div key={job.id} className="bg-white rounded-inha-card border border-inha-border p-6 hover:shadow-lg hover:border-inha-blue/30 transition-all group flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-inha-blue/5 group-hover:border-inha-blue/10 transition-colors">
-                          <Building className="w-6 h-6 text-gray-400 group-hover:text-inha-blue" />
+              ) : careers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {careers.map(job => (
+                    <div key={job.id} className="bg-white rounded-inha-card border border-inha-border p-6 hover:shadow-lg hover:border-inha-blue/30 transition-all group flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-inha-blue/5 group-hover:border-inha-blue/10 transition-colors">
+                            <Building className="w-6 h-6 text-gray-400 group-hover:text-inha-blue" />
+                          </div>
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-100 text-blue-600">
+                            {job.category}
+                          </span>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
-                          job.type === '인턴' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
-                        }`}>
-                          {job.type}
-                        </span>
+                        
+                        <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-inha-blue transition-colors line-clamp-2 min-h-[3.5rem]">
+                          {job.title}
+                        </h3>
                       </div>
-                      
-                      <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-inha-blue transition-colors line-clamp-1">
-                        {job.title}
-                      </h3>
-                      <p className="text-sm text-inha-text-sub font-semibold mb-4">{job.company}</p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-6">
-                        {job.tags.map(tag => (
-                          <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">#{tag}</span>
-                        ))}
+
+                      <div className="pt-4 border-t border-gray-50">
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            게시일: {job.date}
+                          </div>
+                        </div>
+                        <a 
+                          href={job.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-2 py-3 bg-inha-bg text-inha-blue font-bold rounded-xl group-hover:bg-inha-blue group-hover:text-white transition-all"
+                        >
+                          상세보기
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
                       </div>
                     </div>
-
-                    <div className="pt-4 border-t border-gray-50">
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {job.location}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {job.deadline}
-                        </div>
-                      </div>
-                      <a 
-                        href={job.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-inha-bg text-inha-blue font-bold rounded-xl group-hover:bg-inha-blue group-hover:text-white transition-all"
-                      >
-                        상세보기
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-inha-card border-2 border-dashed border-inha-border py-20 flex flex-col items-center justify-center text-gray-400 gap-4 text-center px-6">
+                  <Briefcase className="w-12 h-12 opacity-20" />
+                  <div>
+                    <p className="text-lg font-bold text-gray-500">등록된 채용 공고가 없습니다.</p>
+                    <p className="text-sm mt-1">다른 학과를 선택하거나 나중에 다시 확인해 주세요.</p>
                   </div>
-                ))}
-              </div>
-              
-              {/* 추가 로딩 버튼 */}
-              <button className="w-full py-4 border-2 border-dashed border-inha-border text-inha-text-sub font-bold rounded-2xl hover:bg-gray-50 hover:border-inha-blue/30 transition-all">
-                채용 공고 더보기
-              </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

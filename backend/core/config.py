@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
 
+    # Naver Maps API Settings
+    NAVER_MAP_CLIENT_ID: str = os.getenv("VITE_NAVER_MAP_CLIENT_ID", "")
+    NAVER_MAP_CLIENT_SECRET: str = os.getenv("NAVER_MAP_CLIENT_SECRET", "")
+
+    # Campus Portal Credentials
+    CAMPUS_ID: str = os.getenv("CAMPUS_ID", "")
+    CAMPUS_PW: str = os.getenv("CAMPUS_PW", "")
+
     # Crawler Settings
     REQUEST_TIMEOUT: int = 20
     MAX_RETRIES: int = 3

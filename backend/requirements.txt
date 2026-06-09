@@ -6,12 +6,8 @@ python-dotenv
 requests
 beautifulsoup4
 supabase
-playwright
 langchain
-langchain-openai
-chromadb
-openai
+langchain-core
 google-generativeai
 langchain-google-genai
-pytest
 httpx

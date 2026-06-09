@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS notices (
     author TEXT DEFAULT '관리자',     -- 작성 부서/작성자
     date DATE NOT NULL,              -- 게시일
     views INTEGER DEFAULT 0,         -- 조회수
+    content TEXT,                    -- 상세 본문 내용 (Markdown)
     attachments JSONB DEFAULT '[]',  -- 첨부파일 목록 [{"name": "...", "url": "..."}]
     created_at TIMESTAMPTZ DEFAULT NOW(),
     
@@ -84,6 +85,32 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 시설 정보 조회 가능') THEN
         CREATE POLICY "누구나 시설 정보 조회 가능" ON facilities FOR SELECT USING (true);
+    END IF;
+END
+$$;
+
+-- 5. 대화 내역 저장 테이블 (chat_history)
+CREATE TABLE IF NOT EXISTS chat_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id TEXT NOT NULL,        -- 브라우저 세션 ID (임시 토큰)
+    role TEXT NOT NULL,              -- user, assistant
+    content TEXT NOT NULL,           -- 메시지 본문
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 조회 성능 최적화 (세션별 정렬 조회)
+CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_history(session_id, created_at ASC);
+
+-- RLS 설정
+ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '누구나 대화 내역 저장 가능') THEN
+        CREATE POLICY "누구나 대화 내역 저장 가능" ON chat_history FOR INSERT WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = '자신의 세션 대화 조회 가능') THEN
+        CREATE POLICY "자신의 세션 대화 조회 가능" ON chat_history FOR SELECT USING (true);
     END IF;
 END
 $$;

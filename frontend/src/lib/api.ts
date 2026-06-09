@@ -174,66 +174,25 @@ export interface ChatMessage {
   content: string
 }
 
-// 브라우저 로컬 스토리지에서 세션 ID를 가져오거나 없으면 새로 생성 (2시간 만료)
-export function getOrCreateSessionId(): string {
-  const SESSION_KEY = 'induck_session_id'
-  const TIMESTAMP_KEY = 'induck_session_timestamp'
-  const EXPIRATION_MS = 2 * 60 * 60 * 1000 // 2시간
-
-  let sessionId = localStorage.getItem(SESSION_KEY)
-  const timestampStr = localStorage.getItem(TIMESTAMP_KEY)
-  const now = Date.now()
-
-  // 세션이 없거나 만료된 경우 새로 생성
-  if (!sessionId || !timestampStr || (now - parseInt(timestampStr, 10) > EXPIRATION_MS)) {
-    sessionId = crypto.randomUUID()
-    localStorage.setItem(SESSION_KEY, sessionId)
-    localStorage.setItem(TIMESTAMP_KEY, now.toString())
-  } else {
-    // 세션이 유효하면 만료 시간 갱신 (선택적: 마지막 활동 기준 연장)
-    localStorage.setItem(TIMESTAMP_KEY, now.toString())
-  }
-
-  return sessionId
-}
-
-// 이전 대화 기록 불러오기 (Supabase 직접 조회)
-export async function fetchChatHistory(sessionId: string): Promise<ChatMessage[]> {
-  try {
-    const { data, error } = await supabase
-      .from('chat_history')
-      .select('role, content')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-
-    if (error) throw error
-
-    return (data || []).map((msg: any) => ({
-      role: msg.role === 'assistant' ? 'bot' : msg.role,
-      content: msg.content
-    }))
-  } catch (err) {
-    console.error('Failed to fetch chat history:', err)
-    return []
-  }
+// 대화 기록 불러오기 비활성화 (스테이트리스 방식으로 변경)
+export async function fetchChatHistory(_sessionId: string): Promise<ChatMessage[]> {
+  return []
 }
 
 export async function sendMessage(
   messages: ChatMessage[],
   onUpdate?: (content: string) => void
 ): Promise<string> {
-  const sessionId = getOrCreateSessionId()
-  
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ messages, session_id: sessionId }),
+    body: JSON.stringify({ messages }),
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
+    const errorData = await response.json().catch(() => ({ detail: '서버 에러가 발생했덕! 잠시 후 다시 시도해줘덕.' }))
     throw new Error(errorData.detail || 'Failed to send message')
   }
 
@@ -270,4 +229,5 @@ export async function sendMessage(
 
   return fullContent
 }
+
 

@@ -127,17 +127,18 @@ def search_campus_notices(keyword: str):
 def search_career_info(keyword: str):
     """
     인하공업전문대학의 학과별 취업 정보 및 채용 공고를 검색합니다.
-    keyword: 검색할 키워드 (예: '삼성전자', '현대자동차', '추천채용', '실습' 등)
+    keyword: 검색할 키워드 (예: '컴퓨터정보과', '삼성전자', '현대자동차', '추천채용', '실습' 등)
     """
     careers = SupabaseService.search_careers(keyword=keyword)
     if not careers:
-        return f"'{keyword}'와(과) 관련된 취업 정보를 찾지 못했덕."
+        return f"'{keyword}'와(과) 관련된 취업 정보를 찾지 못했덕. 검색어를 '컴퓨터' 등으로 짧게 해서 다시 물어봐달덕!"
     
-    result = []
-    for c in careers:
-        summary = (c['content'][:200] + "...") if c.get('content') else "본문 내용 없음"
-        result.append(f"💼 [{c['category']}] {c['title']} ({c['date']})\n- 요약: {summary}\n- 원본 링크: {c['url']}")
+    result = [f"'{keyword}'에 대해 총 {len(careers)}건의 취업 정보를 찾았덕:"]
+    for i, c in enumerate(careers[:5], 1): # 상위 5개만 집중 제공
+        result.append(f"{i}. [{c['category']}] {c['title']}")
+        result.append(f"   - 게시일: {c['date']}")
+        result.append(f"   - 바로가기: {c['url']}")
     
-    return "\n\n".join(result)
+    return "\n".join(result)
 
 tools = [get_campus_meals, get_campus_schedules, get_campus_location, analyze_notice_image, search_campus_notices, search_career_info]

@@ -3,10 +3,10 @@ import Header from '../components/Header'
 import induckMascot from '../assets/induck-i.webp'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { sendMessage, type ChatMessage, getOrCreateSessionId, fetchChatHistory } from '../lib/api'
+import { sendMessage, type ChatMessage } from '../lib/api'
 
 /* * 챗봇 메시지 타입 정의
- * role: 'user' | 'bot' (인덕이)
+ * role: 'user' | 'bot' (인하덕)
  */
 interface Message {
   role: 'user' | 'bot';
@@ -19,18 +19,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-
-  /* 컴포넌트 마운트 시 이전 대화 기록 불러오기 */
-  useEffect(() => {
-    const loadHistory = async () => {
-      const sessionId = getOrCreateSessionId();
-      const history = await fetchChatHistory(sessionId);
-      if (history && history.length > 0) {
-        setMessages(history as Message[]);
-      }
-    };
-    loadHistory();
-  }, [])
 
   /* 퀵 메뉴 스크롤 제어를 위한 Ref 및 상태 */
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -89,7 +77,7 @@ export default function ChatPage() {
       setInput('')
     }
     
-    /* 인덕이 응답 호출 시작 */
+    /* 인하덕 응답 호출 시작 */
     setIsTyping(true)
     
     let fullReceivedText = ''
@@ -279,7 +267,7 @@ export default function ChatPage() {
               <div className="w-24 h-24 bg-inha-pill-bg rounded-full flex items-center justify-center mb-6 overflow-hidden border-4 border-white shadow-sm">
                 <img src={induckMascot} alt="Mascot" className="w-full h-full object-cover scale-110" />
               </div>
-              <h2 className="text-2xl font-bold text-inha-blue mb-3">안녕하세요! 인덕이 입니다!</h2>
+              <h2 className="text-2xl font-bold text-inha-blue mb-3">안녕하세요! 인하덕 입니다!</h2>
               <p className="text-inha-text-main leading-relaxed text-sm md:text-base">
                 인하공전 학생들을 위한 스마트한 챗봇 서비스입니다.<br />
                 학교 생활, 학사 일정, 캠퍼스 안내 등 무엇이든 물어보세요!
@@ -292,7 +280,7 @@ export default function ChatPage() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                 <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {/* 인덕이 프로필 이미지 */}
+                  {/* 인하덕 프로필 이미지 */}
                   {msg.role === 'bot' && (
                     <div className="w-8 h-8 rounded-full bg-inha-pill-bg flex-shrink-0 flex items-center justify-center border border-inha-border overflow-hidden">
                       <img src={induckMascot} alt="Bot" className="w-full h-full object-cover scale-110" />
@@ -325,7 +313,7 @@ export default function ChatPage() {
                     <img src={induckMascot} alt="Bot" className="w-full h-full object-cover scale-110" />
                   </div>
                   <div className="p-3 bg-white border border-inha-border rounded-inha-card rounded-tl-none text-inha-text-sub text-xs">
-                    인덕이가 생각 중...
+                    인하덕이가 생각 중...
                   </div>
                 </div>
               </div>
@@ -421,7 +409,7 @@ export default function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="인덕이에게 질문을 입력하세요..."
+            placeholder="인하덕이에게 질문을 입력하세요..."
             className="w-full h-12 md:h-14 pl-6 pr-14 bg-inha-bg border border-inha-border-input rounded-inha-input outline-none focus:border-inha-blue focus:ring-4 focus:ring-inha-blue/5 transition-all text-inha-text-main placeholder:text-inha-text-sub text-sm md:text-base shadow-inner"
           />
           <button 
@@ -434,7 +422,7 @@ export default function ChatPage() {
             </svg>
           </button>
         </div>
-        <p className="hidden md:block text-[10px] text-inha-text-sub">© 2024 Inha Technical College. Smart Chatbot Service.</p>
+        <p className="hidden md:block text-[10px] text-inha-text-sub">© 2026 Inha Technical College. Smart Chatbot Service.</p>
       </footer>
     </div>
   )

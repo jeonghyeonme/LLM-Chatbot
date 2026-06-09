@@ -12,8 +12,8 @@ import asyncio
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
-# 인덕이 페르소나 설정
-SYSTEM_PROMPT = """너는 인하공전의 마스코트이자 도우미인 '인덕이'야. 
+# 인하덕 페르소나 설정
+SYSTEM_PROMPT = """너는 인하공전의 마스코트이자 도우미인 '인하덕'이야. 
 학생들에게 항상 친절하고 활기차게 대답해줘. 
 문장 끝에는 반드시 '~덕!', '~했덕!', '~이덕!' 같은 '덕' 접미사를 붙여서 귀엽고 특징 있는 말투를 사용해줘.
 인하공전에 대한 자부심이 강하고, 학생들의 질문에 성심성의껏 답변해줘.
@@ -28,7 +28,7 @@ SYSTEM_PROMPT = """너는 인하공전의 마스코트이자 도우미인 '인�
 3. 공지사항 답변 시에는 반드시 [공지 제목](원본 링크) 형태로 제목에 링크를 걸어서 사용자가 바로 확인할 수 있게 해줘덕. 게시일 정보도 같이 적어주면 더 좋덕!
 4. 위치나 공지에 대한 친절한 설명도 곁들여주면 더 좋덕.
 
-만약 네가 모르는 정보에 대해 질문하면, "그건 인덕이도 아직 공부 중인 내용이덕! 홈페이지를 확인해보는 건 어떻덕?" 처럼 정중하게 모른다고 말해줘.
+만약 네가 모르는 정보에 대해 질문하면, "그건 인하덕이도 아직 공부 중인 내용이덕! 홈페이지를 확인해보는 건 어떻덕?" 처럼 정중하게 모른다고 말해줘.
 """
 
 @router.post("")
@@ -54,50 +54,83 @@ async def chat(request: ChatRequest):
             elif msg.role == "assistant" or msg.role == "bot":
                 langchain_messages.append(AIMessage(content=msg.content))
 
-        # 사용자 메시지 저장
-        if request.session_id and latest_user_message:
-            SupabaseService.save_chat_message(request.session_id, "user", latest_user_message)
+        # 사용자 메시지 저장 (비활성화)
+        # if request.session_id and latest_user_message:
+        #     SupabaseService.save_chat_message(request.session_id, "user", latest_user_message)
 
         async def event_generator():
             full_response = ""
-            # 1. 모델 호출 (도구 호출 여부 확인)
-            response = await llm.ainvoke(langchain_messages)
+            print(f"--- Chat Start: {latest_user_message[:50]} ---")
             
-            # 도구 호출이 있는 경우 처리
-            if response.tool_calls:
-                langchain_messages.append(response)
-                for tool_call in response.tool_calls:
-                    tool_name = tool_call["name"].lower()
-                    selected_tool = next((t for t in tools if t.name.lower() == tool_name), None)
-                    if selected_tool:
-                        tool_output = await selected_tool.ainvoke(tool_call["args"])
-                        langchain_messages.append(ToolMessage(content=str(tool_output), tool_call_id=tool_call["id"]))
+            try:
+                # 최대 5회까지 도구 호출 루프 허용
+                max_iterations = 5
+                current_iteration = 0
                 
-                # 도구 결과 포함하여 다시 호출 (스트리밍)
-                async for chunk in llm.astream(langchain_messages):
-                    content = chunk.content
-                    if isinstance(content, list):
-                        content = "".join([block.get("text", "") if isinstance(block, dict) else str(block) for block in content])
-                    if content:
-                        full_response += content
-                        yield f"data: {json.dumps({'content': content})}\n\n"
-            else:
-                # 도구 호출이 없는 경우 바로 스트리밍 응답 (ainvoke 결과는 이미 나왔으므로 astream으로 다시 하거나 바로 보냄)
-                # 여기서는 일관성을 위해 astream을 처음부터 사용하거나, 이미 나온 결과를 먼저 보냄
-                # astream을 처음부터 다시 호출하여 스트리밍 효과 유지
-                async for chunk in llm.astream(langchain_messages):
-                    content = chunk.content
-                    if isinstance(content, list):
-                        content = "".join([block.get("text", "") if isinstance(block, dict) else str(block) for block in content])
-                    if content:
-                        full_response += content
-                        yield f"data: {json.dumps({'content': content})}\n\n"
-            
-            # 봇 응답 저장
-            if request.session_id and full_response:
-                SupabaseService.save_chat_message(request.session_id, "assistant", full_response)
+                while current_iteration < max_iterations:
+                    current_iteration += 1
+                    print(f"Requesting response from LLM (Iteration {current_iteration})...")
+                    
+                    response = await llm.ainvoke(langchain_messages)
+                    
+                    # 도구 호출이 있는 경우
+                    if response.tool_calls:
+                        print(f"Tool calls detected: {[tc['name'] for tc in response.tool_calls]}")
+                        langchain_messages.append(response)
+                        
+                        for tool_call in response.tool_calls:
+                            tool_name = tool_call["name"].lower()
+                            selected_tool = next((t for t in tools if t.name.lower() == tool_name), None)
+                            if selected_tool:
+                                print(f"Executing tool: {tool_name}")
+                                tool_output = await selected_tool.ainvoke(tool_call["args"])
+                                content = tool_output if isinstance(tool_output, str) else json.dumps(tool_output, ensure_ascii=False)
+                                langchain_messages.append(ToolMessage(content=content, tool_call_id=tool_call["id"]))
+                        
+                        # 루프를 계속 돌아 다음 응답을 받음
+                        continue
+                    
+                    # 도구 호출이 없고 답변 내용이 있는 경우
+                    else:
+                        content = response.content
+                        if isinstance(content, list):
+                            content = "".join([block.get("text", "") if isinstance(block, dict) else str(block) for block in content])
+                        
+                        if content and content.strip():
+                            print(f"Final answer received (length: {len(content)}).")
+                            # 가상 스트리밍으로 UX 제공
+                            chunk_size = 8
+                            for i in range(0, len(content), chunk_size):
+                                chunk = content[i:i+chunk_size]
+                                full_response += chunk
+                                yield f"data: {json.dumps({'content': chunk})}\n\n"
+                                await asyncio.sleep(0.01)
+                            break # 루프 종료
+                        else:
+                            print("!!! Warning: LLM returned empty content without tool calls.")
+                            # 만약 루프 마지막인데 내용이 없으면 힌트 추가 후 한 번 더 시도
+                            langchain_messages.append(HumanMessage(content="학생이 기다리고 있덕! 찾은 정보를 정리해서 '인하덕'의 말투로 친절하게 답변해줘덕!"))
+                            continue
 
-            yield "data: [DONE]\n\n"
+                if not full_response:
+                    print("!!! Critical: Loop finished without generating response.")
+                    yield f"data: {json.dumps({'content': '미안하덕! 정보를 찾으려 노력했지만 답변을 정리하는 데 실패했덕. 다시 한번 물어봐줄 수 있덕?'})}\n\n"
+
+                print(f"--- Chat Completed. Total response length: {len(full_response)} ---")
+                yield "data: [DONE]\n\n"
+
+            except Exception as e:
+                error_msg = str(e)
+                print(f"!!! Error in event_generator: {error_msg}")
+                import traceback
+                traceback.print_exc()
+                
+                friendly_msg = "미안하덕! 답변을 생성하는 중에 오류가 발생했덕."
+                if "RESOURCE_EXHAUSTED" in error_msg:
+                    friendly_msg = "인하덕이의 오늘 답변 할당량이 다 소모되었덕! 내일 다시 찾아와줄 수 있덕? (혹은 API 키를 확인해줘덕)"
+                
+                yield f"data: {json.dumps({'content': friendly_msg})}\n\n"
+                yield "data: [DONE]\n\n"
 
         return StreamingResponse(event_generator(), media_type="text/event-stream")
 

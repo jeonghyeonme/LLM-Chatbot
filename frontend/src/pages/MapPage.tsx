@@ -90,7 +90,7 @@ const MapPage: React.FC = () => {
   // 시설 선택 시 해당 위치로 이동
   const handleSelectFacility = (facility: FacilityWithCategory | null) => {
     setSelectedFacility(facility);
-    if (facility && mapRef.current) {
+    if (facility && mapRef.current && typeof window !== 'undefined' && window.naver?.maps) {
       const location = new window.naver.maps.LatLng(facility.latitude, facility.longitude);
       mapRef.current.panTo(location);
     }
@@ -159,7 +159,7 @@ const MapPage: React.FC = () => {
               {filteredFacilities.map((f) => (
                 <Marker
                   key={f.id}
-                  position={new window.naver.maps.LatLng(f.latitude, f.longitude)}
+                  position={{ lat: f.latitude, lng: f.longitude }}
                   title={f.name}
                   onClick={() => handleSelectFacility(f)}
                 />
@@ -167,7 +167,7 @@ const MapPage: React.FC = () => {
 
               {selectedFacility && (
                 <InfoWindow
-                  position={new window.naver.maps.LatLng(selectedFacility.latitude, selectedFacility.longitude)}
+                  position={{ lat: selectedFacility.latitude, lng: selectedFacility.longitude }}
                   content={`
                     <div style="padding: 12px; min-width: 150px; background-color: white; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); text-align: center;">
                       <h4 style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #111827;">${selectedFacility.name}</h4>

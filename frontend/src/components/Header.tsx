@@ -25,7 +25,7 @@ export default function Header() {
         {/* 서비스 로고 및 홈 링크 */}
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <img src={induckMascot} alt="Logo" className="w-8 h-8" />
-          <span className="text-xl font-bold text-inha-blue tracking-tight hidden md:block">Inha Tech Bot</span>
+          <span className="text-xl font-bold text-inha-blue tracking-tight hidden md:block">인하덕</span>
         </Link>
         
         {/* 메인 내비게이션 메뉴 (GNB) */}

@@ -22,7 +22,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:5174",
-        "https://induck-it.vercel.app", # 필요시 실제 Vercel 주소로 변경
+        "https://induck-it.vercel.app",
+        "https://induck-c9yvelp87-park-n-chills-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

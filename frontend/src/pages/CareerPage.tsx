@@ -77,7 +77,7 @@ const CareerPage: React.FC = () => {
               </h1>
               <p className="text-blue-100 text-lg max-w-2xl leading-relaxed">
                 각 학과 홈페이지에 게시된 최신 취업처 정보와 채용 공고를 한눈에 확인하세요.<br />
-                인덕이가 여러분의 꿈을 응원합니다!
+                인하덕이가 여러분의 꿈을 응원합니다!
               </p>
               
               <div className="flex flex-wrap gap-4 mt-8">

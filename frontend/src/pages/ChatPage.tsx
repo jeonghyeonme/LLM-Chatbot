@@ -3,10 +3,10 @@ import Header from '../components/Header'
 import induckMascot from '../assets/induck-i.webp'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { sendMessage, type ChatMessage } from '../lib/api'
+import { sendMessage, type ChatMessage, getOrCreateSessionId, fetchChatHistory } from '../lib/api'
 
 /* * 챗봇 메시지 타입 정의
- * role: 'user' (사용자) | 'bot' (인덕이)
+ * role: 'user' | 'bot' (인덕이)
  */
 interface Message {
   role: 'user' | 'bot';
@@ -19,6 +19,18 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+
+  /* 컴포넌트 마운트 시 이전 대화 기록 불러오기 */
+  useEffect(() => {
+    const loadHistory = async () => {
+      const sessionId = getOrCreateSessionId();
+      const history = await fetchChatHistory(sessionId);
+      if (history && history.length > 0) {
+        setMessages(history as Message[]);
+      }
+    };
+    loadHistory();
+  }, [])
 
   /* 퀵 메뉴 스크롤 제어를 위한 Ref 및 상태 */
   const scrollRef = useRef<HTMLDivElement>(null)

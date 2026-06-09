@@ -1,18 +1,18 @@
-name: Schedule Data Sync
+name: Career Data Sync
 
 on:
   schedule:
-    # 매주 월요일 한국 시간 오전 9시 (UTC 00:00) - 학사일정은 자주 변하지 않으므로 주 1회
-    - cron: '0 0 * * 1'
+    # 매일 한국 시간 오후 5시 (UTC 08:00) - 취업 공고는 하루 일과가 끝날 무렵 업데이트
+    - cron: '0 8 * * *'
   push:
     branches: [ main, master ]
     paths:
-      - 'backend/services/crawler/schedule.py'
-      - 'backend/app/run_schedule_crawler.py'
+      - 'backend/services/crawler/career.py'
+      - 'backend/app/run_career_crawler.py'
   workflow_dispatch:
 
 jobs:
-  run-schedule-sync:
+  run-career-sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,10 +37,10 @@ jobs:
       - name: Install Playwright Dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: python -m playwright install-deps chromium
-      - name: Execute Schedule Crawler
+      - name: Execute Career Crawler
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           cd backend
-          python app/run_schedule_crawler.py
+          python app/run_career_crawler.py

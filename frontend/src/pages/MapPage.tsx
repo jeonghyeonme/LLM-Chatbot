@@ -1,21 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   MapPin, Search, Building2, BookOpen, Info,
   Dumbbell, Home, Wrench, Users, DoorOpen,
 } from 'lucide-react';
-import { Map, MapMarker } from 'react-kakao-maps-sdk';
+import { Container as MapDiv, NaverMap, Marker, InfoWindow } from 'react-naver-maps';
 import Header from '../components/Header';
 import { fetchFacilities, type Facility } from '../lib/api';
 import { categorize, type FacilityCategory } from '../lib/categorize';
 import { getDepartments } from '../lib/departments';
 
-// 인하공전 캠퍼스 중심 좌표 (전체 시설이 화면에 잘 보이는 위치)
+declare global {
+  interface Window {
+    naver: any;
+  }
+}
+
+// 인하공전 캠퍼스 중심 좌표
 const CAMPUS_CENTER = { lat: 37.4485, lng: 126.6573 };
-const INITIAL_LEVEL = 4; // 카카오맵 줌 레벨 (낮을수록 확대)
+const INITIAL_ZOOM = 16;
 
 type CategoryFilter = FacilityCategory | 'all';
 
-// 카테고리별 아이콘 매핑
 const CATEGORY_ICONS: Record<CategoryFilter, React.ReactNode> = {
   all: <Info className="w-4 h-4" />,
   building: <Building2 className="w-4 h-4" />,
@@ -28,7 +33,6 @@ const CATEGORY_ICONS: Record<CategoryFilter, React.ReactNode> = {
   other: <Info className="w-4 h-4" />,
 };
 
-// 필터 탭 순서
 const CATEGORY_TABS: { id: CategoryFilter; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'building', label: '건물' },
@@ -45,10 +49,9 @@ interface FacilityWithCategory extends Facility {
   category: FacilityCategory;
 }
 
-/**
- * 캠퍼스 맵 및 시설 안내 페이지
- */
 const MapPage: React.FC = () => {
+  const mapRef = useRef<any>(null);
+
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [selectedFacility, setSelectedFacility] = useState<FacilityWithCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,27 +60,7 @@ const MapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // SDK 로드 상태 (index.html 의 script autoload=false 이므로 명시 load 필요)
-  const [mapReady, setMapReady] = useState(false);
-
-  useEffect(() => {
-    const kakao = (window as any).kakao;
-    if (kakao && kakao.maps) {
-      kakao.maps.load(() => setMapReady(true));
-    } else {
-      // 스크립트 로딩이 늦는 경우 폴링
-      const timer = setInterval(() => {
-        const k = (window as any).kakao;
-        if (k && k.maps) {
-          k.maps.load(() => setMapReady(true));
-          clearInterval(timer);
-        }
-      }, 100);
-      return () => clearInterval(timer);
-    }
-  }, []);
-
-  // 시설 데이터 로드 + 카테고리 자동 분류
+  // 시설 데이터 로드
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -95,7 +78,7 @@ const MapPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // 카테고리/검색 필터링
+  // 필터링
   const filteredFacilities = useMemo(() => {
     return facilities.filter((f) => {
       const matchCategory = activeCategory === 'all' || f.category === activeCategory;
@@ -104,9 +87,19 @@ const MapPage: React.FC = () => {
     });
   }, [facilities, activeCategory, searchQuery]);
 
-  // 길찾기: Kakao Map 웹에서 해당 좌표로 안내
-  const openKakaoDirections = (facility: FacilityWithCategory) => {
-    const url = `https://map.kakao.com/link/to/${encodeURIComponent(facility.name)},${facility.latitude},${facility.longitude}`;
+  // 시설 선택 시 해당 위치로 이동
+  const handleSelectFacility = (facility: FacilityWithCategory | null) => {
+    setSelectedFacility(facility);
+    if (facility && mapRef.current) {
+      const location = new window.naver.maps.LatLng(facility.latitude, facility.longitude);
+      mapRef.current.panTo(location);
+    }
+  };
+
+  const openNaverDirections = (facility: FacilityWithCategory) => {
+    // 도착지(2번째 슬롯)에 좌표를 넣고 ,,,ADDRESS_POI 를 붙여 목적지로 강제 인식시킴
+    // 이동 수단을 transit(대중교통)으로 변경
+    const url = `https://map.naver.com/v5/directions/-/${facility.longitude},${facility.latitude},${encodeURIComponent(facility.name)},,,ADDRESS_POI/-/transit`;
     window.open(url, '_blank');
   };
 
@@ -114,7 +107,6 @@ const MapPage: React.FC = () => {
     <div className="flex flex-col h-screen bg-inha-bg animate-fade-in">
       <Header />
 
-      {/* 상단 타이틀 및 검색 영역 */}
       <div className="p-6 pb-0 pt-24">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
@@ -137,7 +129,6 @@ const MapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 카테고리 필터 탭 */}
         <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
           {CATEGORY_TABS.map((cat) => (
             <button
@@ -156,36 +147,37 @@ const MapPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 메인 콘텐츠 영역: 맵(좌) + 리스트(우) */}
       <div className="flex-1 flex flex-col md:flex-row gap-6 p-6 pt-0 overflow-hidden">
-
-        {/* 캠퍼스 맵 영역 */}
+        {/* 네이버 지도 영역 */}
         <div className="flex-1 bg-white border border-inha-border rounded-3xl relative overflow-hidden shadow-sm">
-          {mapReady ? (
-            <Map
-              center={CAMPUS_CENTER}
-              level={INITIAL_LEVEL}
-              style={{ width: '100%', height: '100%' }}
+          <MapDiv style={{ width: '100%', height: '100%' }}>
+            <NaverMap
+              defaultCenter={CAMPUS_CENTER}
+              defaultZoom={INITIAL_ZOOM}
+              ref={mapRef}
             >
               {filteredFacilities.map((f) => (
-                <MapMarker
+                <Marker
                   key={f.id}
-                  position={{ lat: f.latitude, lng: f.longitude }}
+                  position={new window.naver.maps.LatLng(f.latitude, f.longitude)}
                   title={f.name}
-                  onClick={() => setSelectedFacility(f)}
+                  onClick={() => handleSelectFacility(f)}
                 />
               ))}
-            </Map>
-          ) : (
-            <div className="absolute inset-0 bg-[#E5E8EE]/30 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-inha-blue/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="w-10 h-10 text-inha-blue" />
-                </div>
-                <p className="text-gray-400 font-medium">캠퍼스 맵을 불러오는 중...</p>
-              </div>
-            </div>
-          )}
+
+              {selectedFacility && (
+                <InfoWindow
+                  position={new window.naver.maps.LatLng(selectedFacility.latitude, selectedFacility.longitude)}
+                  content={`
+                    <div style="padding: 12px; min-width: 150px; background-color: white; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); text-align: center;">
+                      <h4 style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #111827;">${selectedFacility.name}</h4>
+                      <p style="font-size: 12px; color: #6B7280; margin: 0;">지도를 클릭하여 닫기</p>
+                    </div>
+                  `}
+                />
+              )}
+            </NaverMap>
+          </MapDiv>
         </div>
 
         {/* 시설 목록 사이드바 */}
@@ -195,12 +187,8 @@ const MapPage: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 no-scrollbar pb-6">
-            {loading && (
-              <p className="text-center py-10 text-gray-400">불러오는 중…</p>
-            )}
-            {error && (
-              <p className="text-center py-10 text-red-500">에러: {error}</p>
-            )}
+            {loading && <p className="text-center py-10 text-gray-400">불러오는 중…</p>}
+            {error && <p className="text-center py-10 text-red-500">에러: {error}</p>}
             {!loading && !error && filteredFacilities.length === 0 && (
               <div className="text-center py-10 text-gray-400">
                 <Search className="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -210,7 +198,7 @@ const MapPage: React.FC = () => {
             {!loading && !error && filteredFacilities.map((facility) => (
               <div
                 key={facility.id}
-                onClick={() => setSelectedFacility(facility)}
+                onClick={() => handleSelectFacility(facility)}
                 className={`p-4 rounded-2xl border transition-all cursor-pointer hover:shadow-md ${
                   selectedFacility?.id === facility.id
                     ? 'bg-inha-blue/5 border-inha-blue ring-1 ring-inha-blue'
@@ -275,18 +263,16 @@ const MapPage: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <p className="text-gray-500 leading-relaxed mb-6">
-                    
-                  </p>
-                );
-              })()}
+                  <div className="h-4"></div>
+                )}
+              )()}
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => openKakaoDirections(selectedFacility)}
-                  className="flex-1 bg-inha-blue text-white py-3 rounded-xl font-bold hover:bg-inha-blue-dark transition-colors shadow-lg shadow-inha-blue/20"
+                  onClick={() => openNaverDirections(selectedFacility)}
+                  className="flex-1 bg-inha-blue text-white py-4 rounded-xl font-bold hover:bg-inha-blue-dark transition-colors shadow-lg shadow-inha-blue/20"
                 >
-                  길 찾기 (Kakao Map)
+                  길 찾기 (Naver Map)
                 </button>
               </div>
             </div>

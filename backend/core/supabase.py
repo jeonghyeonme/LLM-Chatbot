@@ -22,10 +22,7 @@ class SupabaseService:
         """
         식단 데이터를 업서트합니다.
         """
-        if not supabase:
-            return None
-
-        if not meals:
+        if not supabase or not meals:
             return None
 
         try:
@@ -43,10 +40,7 @@ class SupabaseService:
         """
         학사일정 데이터를 업서트합니다.
         """
-        if not supabase:
-            return None
-
-        if not schedules:
+        if not supabase or not schedules:
             return None
 
         try:
@@ -62,7 +56,7 @@ class SupabaseService:
     @staticmethod
     def upsert_notices(notices: List[Dict]):
         """
-        공지사항 및 취업 정보 데이터를 업서트합니다.
+        공지사항 데이터를 업서트합니다.
         """
         if not supabase or not notices:
             return None
@@ -78,37 +72,21 @@ class SupabaseService:
             return None
 
     @staticmethod
-    def fetch_notices(category: Optional[str] = None, limit: int = 20):
+    def upsert_careers(careers: List[Dict]):
         """
-        공지사항 데이터를 조회합니다.
+        취업 및 추천채용 데이터를 업서트합니다.
         """
-        if not supabase:
-            return []
-        
-        try:
-            query = supabase.table("notices").select("*")
-            if category:
-                query = query.eq("category", category)
-            
-            response = query.order("date", desc=True).limit(limit).execute()
-            return response.data
-        except Exception as e:
-            print(f"Error fetching notices: {e}")
-            return []
-
-    @staticmethod
-    def fetch_notice_by_id(id: str):
-        """
-        특정 ID의 공지사항 상세 내용을 조회합니다.
-        """
-        if not supabase:
+        if not supabase or not careers:
             return None
-        
+
         try:
-            response = supabase.table("notices").select("*").eq("id", id).single().execute()
-            return response.data
+            response = supabase.table("careers").upsert(
+                careers,
+                on_conflict="category,external_id"
+            ).execute()
+            return response
         except Exception as e:
-            print(f"Error fetching notice by id: {e}")
+            print(f"Error upserting careers: {e}")
             return None
 
     @staticmethod
@@ -128,7 +106,7 @@ class SupabaseService:
     @staticmethod
     def fetch_meals(date: Optional[str] = None, meal_type: Optional[str] = None):
         """
-        식단 데이터를 조회합니다.
+        식단 데이터를 조회합니다. (챗봇 툴에서 사용)
         """
         if not supabase:
             return []
@@ -149,7 +127,7 @@ class SupabaseService:
     @staticmethod
     def fetch_schedules(start_date: Optional[str] = None, end_date: Optional[str] = None):
         """
-        학사일정 데이터를 조회합니다.
+        학사일정 데이터를 조회합니다. (챗봇 툴에서 사용)
         """
         if not supabase:
             return []
@@ -188,7 +166,7 @@ class SupabaseService:
     @staticmethod
     def fetch_facilities(category: Optional[str] = None, name: Optional[str] = None):
         """
-        시설 정보를 조회합니다.
+        시설 정보를 조회합니다. (챗봇 툴에서 사용)
         """
         if not supabase:
             return []
@@ -204,4 +182,72 @@ class SupabaseService:
             return response.data
         except Exception as e:
             print(f"Error fetching facilities: {e}")
+            return []
+
+    @staticmethod
+    def search_notices(keyword: str, limit: int = 5):
+        """
+        공지사항을 키워드로 검색합니다. (제목 또는 본문)
+        """
+        if not supabase or not keyword:
+            return []
+        
+        try:
+            # 제목 또는 본문에 키워드가 포함된 데이터 검색
+            response = supabase.table("notices").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+            return response.data
+        except Exception as e:
+            print(f"Error searching notices: {e}")
+            return []
+
+    @staticmethod
+    def search_careers(keyword: str, limit: int = 5):
+        """
+        취업 정보를 키워드로 검색합니다. (제목 또는 본문)
+        """
+        if not supabase or not keyword:
+            return []
+        
+        try:
+            response = supabase.table("careers").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+            return response.data
+        except Exception as e:
+            print(f"Error searching careers: {e}")
+            return []
+
+    @staticmethod
+    def save_chat_message(session_id: str, role: str, content: str):
+        """
+        대화 메시지를 저장합니다.
+        """
+        if not supabase or not session_id or not content:
+            return None
+            
+        try:
+            response = supabase.table("chat_history").insert({
+                "session_id": session_id,
+                "role": role,
+                "content": content
+            }).execute()
+            return response
+        except Exception as e:
+            print(f"Error saving chat message: {e}")
+            return None
+
+    @staticmethod
+    def get_chat_history(session_id: str, limit: int = 20):
+        """
+        특정 세션의 최근 대화 기록을 조회합니다.
+        """
+        if not supabase or not session_id:
+            return []
+            
+        try:
+            # 최근 대화를 가져오기 위해 내림차순 정렬 후 다시 오름차순으로 뒤집어야 하지만,
+            # 여기서는 클라이언트가 전체 컨텍스트를 주는 구조일 경우 보조적인 용도로 사용됨.
+            # 서버에서 컨텍스트를 주입하려면 오름차순으로 가져오는 것이 편함.
+            response = supabase.table("chat_history").select("*").eq("session_id", session_id).order("created_at", desc=False).limit(limit).execute()
+            return response.data
+        except Exception as e:
+            print(f"Error fetching chat history: {e}")
             return []

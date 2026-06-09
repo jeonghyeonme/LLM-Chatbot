@@ -1,0 +1,8 @@
+# Crawler specific dependencies
+playwright
+html2text
+beautifulsoup4
+requests
+supabase
+pydantic-settings
+python-dotenv

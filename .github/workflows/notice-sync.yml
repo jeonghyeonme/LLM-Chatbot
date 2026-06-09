@@ -1,18 +1,18 @@
-name: Schedule Data Sync
+name: Notice Data Sync
 
 on:
   schedule:
-    # 매주 월요일 한국 시간 오전 9시 (UTC 00:00) - 학사일정은 자주 변하지 않으므로 주 1회
-    - cron: '0 0 * * 1'
+    # 매일 한국 시간 오전 8시, 오후 1시, 오후 6시 (UTC 23:00, 04:00, 09:00) - 공지사항은 자주 업데이트 확인
+    - cron: '0 23,4,9 * * *'
   push:
     branches: [ main, master ]
     paths:
-      - 'backend/services/crawler/schedule.py'
-      - 'backend/app/run_schedule_crawler.py'
+      - 'backend/services/crawler/notice.py'
+      - 'backend/app/run_notice_crawler.py'
   workflow_dispatch:
 
 jobs:
-  run-schedule-sync:
+  run-notice-sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,10 +37,10 @@ jobs:
       - name: Install Playwright Dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: python -m playwright install-deps chromium
-      - name: Execute Schedule Crawler
+      - name: Execute Notice Crawler
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           cd backend
-          python app/run_schedule_crawler.py
+          python app/run_notice_crawler.py

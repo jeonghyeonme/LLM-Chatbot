@@ -17,9 +17,10 @@ def main():
         print("⚠️ 에러: CAMPUS_ID와 CAMPUS_PW 환경변수가 설정되지 않았습니다.")
         return
 
-    map_path = os.path.join(os.getcwd(), 'dept_career_map.json')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    map_path = os.path.join(script_dir, 'dept_career_map.json')
     if not os.path.exists(map_path):
-        print("⚠️ 에러: dept_career_map.json 파일이 없습니다. discover_depts.py를 먼저 실행하세요.")
+        print(f"⚠️ 에러: {map_path} 파일이 없습니다. discover_depts.py를 먼저 실행하세요.")
         return
 
     with open(map_path, 'r', encoding='utf-8') as f:

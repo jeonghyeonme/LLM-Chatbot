@@ -19,7 +19,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false)
 
   /* 컴포넌트 마운트 시 이전 대화 기록 불러오기 */
   useEffect(() => {
@@ -29,7 +28,6 @@ export default function ChatPage() {
       if (history && history.length > 0) {
         setMessages(history as Message[]);
       }
-      setIsHistoryLoaded(true);
     };
     loadHistory();
   }, [])

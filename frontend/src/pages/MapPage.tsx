@@ -9,6 +9,12 @@ import { fetchFacilities, type Facility } from '../lib/api';
 import { categorize, type FacilityCategory } from '../lib/categorize';
 import { getDepartments } from '../lib/departments';
 
+declare global {
+  interface Window {
+    naver: any;
+  }
+}
+
 // 인하공전 캠퍼스 중심 좌표
 const CAMPUS_CENTER = { lat: 37.4485, lng: 126.6573 };
 const INITIAL_ZOOM = 16;
@@ -44,7 +50,7 @@ interface FacilityWithCategory extends Facility {
 }
 
 const MapPage: React.FC = () => {
-  const mapRef = useRef<naver.maps.Map | null>(null);
+  const mapRef = useRef<any>(null);
 
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [selectedFacility, setSelectedFacility] = useState<FacilityWithCategory | null>(null);
@@ -162,21 +168,13 @@ const MapPage: React.FC = () => {
               {selectedFacility && (
                 <InfoWindow
                   position={new window.naver.maps.LatLng(selectedFacility.latitude, selectedFacility.longitude)}
-                  onCloseClick={() => setSelectedFacility(null)}
-                >
-                  <div className="p-3 min-w-[150px] bg-white rounded-lg shadow-sm">
-                    <h4 className="font-bold text-sm mb-1">{selectedFacility.name}</h4>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openNaverDirections(selectedFacility);
-                      }}
-                      className="text-xs text-inha-blue font-semibold hover:underline"
-                    >
-                      길찾기 →
-                    </button>
-                  </div>
-                </InfoWindow>
+                  content={`
+                    <div style="padding: 12px; min-width: 150px; background-color: white; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); text-align: center;">
+                      <h4 style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #111827;">${selectedFacility.name}</h4>
+                      <p style="font-size: 12px; color: #6B7280; margin: 0;">지도를 클릭하여 닫기</p>
+                    </div>
+                  `}
+                />
               )}
             </NaverMap>
           </MapDiv>

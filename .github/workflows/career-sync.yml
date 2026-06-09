@@ -39,6 +39,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           CAMPUS_ID: ${{ secrets.CAMPUS_ID }}
           CAMPUS_PW: ${{ secrets.CAMPUS_PW }}
+          PYTHONUNBUFFERED: 1
         run: |
           cd backend
           python app/run_career_crawler.py

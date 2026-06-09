@@ -10,3 +10,4 @@ langchain-core
 google-generativeai
 langchain-google-genai
 httpx
+Pillow

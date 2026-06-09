@@ -105,4 +105,39 @@ def analyze_notice_image(image_url: str):
     except Exception as e:
         return f"이미지 분석 중 오류가 발생했습니다: {e}"
 
-tools = [get_campus_meals, get_campus_schedules, get_campus_location, analyze_notice_image]
+@tool
+def search_campus_notices(keyword: str):
+    """
+    인하공업전문대학의 일반 공지사항(학사, 장학, 행사 등)을 검색합니다.
+    keyword: 검색할 키워드 (예: '장학금', '수강신청', '축제' 등)
+    """
+    notices = SupabaseService.search_notices(keyword=keyword)
+    if not notices:
+        return f"'{keyword}'와(과) 관련된 공지사항을 찾지 못했덕."
+    
+    result = []
+    for n in notices:
+        # 본문은 너무 길 수 있으므로 앞부분만 요약해서 제공하거나 제목 위주로 정보 전달
+        summary = (n['content'][:200] + "...") if n.get('content') else "본문 내용 없음"
+        result.append(f"📌 [{n['category']}] {n['title']} ({n['date']})\n- 요약: {summary}\n- 원본 링크: {n['url']}")
+    
+    return "\n\n".join(result)
+
+@tool
+def search_career_info(keyword: str):
+    """
+    인하공업전문대학의 학과별 취업 정보 및 채용 공고를 검색합니다.
+    keyword: 검색할 키워드 (예: '삼성전자', '현대자동차', '추천채용', '실습' 등)
+    """
+    careers = SupabaseService.search_careers(keyword=keyword)
+    if not careers:
+        return f"'{keyword}'와(과) 관련된 취업 정보를 찾지 못했덕."
+    
+    result = []
+    for c in careers:
+        summary = (c['content'][:200] + "...") if c.get('content') else "본문 내용 없음"
+        result.append(f"💼 [{c['category']}] {c['title']} ({c['date']})\n- 요약: {summary}\n- 원본 링크: {c['url']}")
+    
+    return "\n\n".join(result)
+
+tools = [get_campus_meals, get_campus_schedules, get_campus_location, analyze_notice_image, search_campus_notices, search_career_info]

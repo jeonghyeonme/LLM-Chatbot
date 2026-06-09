@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 export interface Schedule {
   id: string
   title: string
@@ -23,20 +25,8 @@ export interface Facility {
   longitude: number
 }
 
-export interface Career {
-  id: string
-  external_id: string
-  category: string
-  title: string
-  content: string
-  url: string
-  date: string
-  views: number
-  attachments: any[]
-}
-
 // ──────────────────────────────────────────────────────────────────────────────
-// Configuration Constants (Same as Backend)
+// Configuration Constants
 // ──────────────────────────────────────────────────────────────────────────────
 const EXCLUDE_KEYWORDS = ['수업일수', '학기개시']
 const EXAM_KEYWORD = '평가'
@@ -65,7 +55,7 @@ function splitMenu(menuContent: string | null): string[] {
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // ──────────────────────────────────────────────────────────────────────────────
-// API Functions (Via Backend for CORS & Security)
+// API Functions (Directly via Supabase where possible)
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function fetchSchedules(params?: {
@@ -73,28 +63,30 @@ export async function fetchSchedules(params?: {
   end?: string
   limit?: number
 }): Promise<Schedule[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/schedules`, window.location.origin)
-  if (params?.start) url.searchParams.append('start', params.start)
-  if (params?.end) url.searchParams.append('end', params.end)
-  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
+  try {
+    let query = supabase.from('schedules').select('*')
+    
+    if (params?.start) query = query.gte('start_date', params.start)
+    if (params?.end) query = query.lte('start_date', params.end)
+    if (params?.limit) query = query.limit(params.limit)
 
-  const response = await fetch(url.toString())
-  if (!response.ok) {
-    console.error('Failed to fetch schedules')
-    throw new Error('Failed to fetch schedules')
+    const { data, error } = await query.order('start_date', { ascending: true })
+    
+    if (error) throw error
+
+    return (data || [])
+      .filter((r: any) => !EXCLUDE_KEYWORDS.some((kw) => r.title?.includes(kw)))
+      .map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        start_date: r.start_date,
+        end_date: r.end_date,
+        type: r.title?.includes(EXAM_KEYWORD) ? 'exam' : 'info',
+      }))
+  } catch (err) {
+    console.error('Failed to fetch schedules:', err)
+    throw err
   }
-
-  const data = await response.json()
-
-  return (data || [])
-    .filter((r: any) => !EXCLUDE_KEYWORDS.some((kw) => r.title?.includes(kw)))
-    .map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      start_date: r.start_date,
-      end_date: r.end_date,
-      type: r.title?.includes(EXAM_KEYWORD) ? 'exam' : 'info',
-    }))
 }
 
 export async function fetchMeals(params?: {
@@ -102,82 +94,56 @@ export async function fetchMeals(params?: {
   meal_type?: string
   limit?: number
 }): Promise<Meal[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/meals`, window.location.origin)
-  if (params?.date) url.searchParams.append('date', params.date)
-  if (params?.meal_type) url.searchParams.append('meal_type', params.meal_type)
-  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
+  try {
+    let query = supabase.from('meals').select('*')
+    
+    if (params?.date) query = query.eq('date', params.date)
+    if (params?.meal_type) query = query.eq('meal_type', params.meal_type)
+    if (params?.limit) query = query.limit(params.limit)
 
-  const response = await fetch(url.toString())
-  if (!response.ok) {
-    console.error('Failed to fetch meals')
-    throw new Error('Failed to fetch meals')
+    const { data, error } = await query.order('date')
+    
+    if (error) throw error
+
+    return (data || []).map((r: any) => ({
+      id: r.id,
+      date: r.date,
+      meal_type: r.meal_type,
+      menu_category: r.menu_category,
+      restaurant_type: r.restaurant_type,
+      menu_items: splitMenu(r.menu_content),
+      price: resolvePrice(r.meal_type, r.menu_category),
+    }))
+  } catch (err) {
+    console.error('Failed to fetch meals:', err)
+    throw err
   }
-
-  const data = await response.json()
-
-  return (data || []).map((r: any) => ({
-    id: r.id,
-    date: r.date,
-    meal_type: r.meal_type,
-    menu_category: r.menu_category,
-    restaurant_type: r.restaurant_type,
-    menu_items: splitMenu(r.menu_content),
-    price: resolvePrice(r.meal_type, r.menu_category),
-  }))
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Facilities API
-// ──────────────────────────────────────────────────────────────────────────────
 
 export async function fetchFacilities(params?: {
   name?: string
   limit?: number
 }): Promise<Facility[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/facilities`, window.location.origin)
-  if (params?.name) url.searchParams.append('name', params.name)
-  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
+  try {
+    let query = supabase.from('facilities').select('*')
+    
+    if (params?.name) query = query.ilike('name', `%${params.name}%`)
+    if (params?.limit) query = query.limit(params.limit)
 
-  const response = await fetch(url.toString())
-  if (!response.ok) {
-    console.error('Failed to fetch facilities')
-    throw new Error('Failed to fetch facilities')
+    const { data, error } = await query.order('name')
+    
+    if (error) throw error
+
+    return (data || []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      latitude: r.latitude,
+      longitude: r.longitude,
+    }))
+  } catch (err) {
+    console.error('Failed to fetch facilities:', err)
+    throw err
   }
-
-  const data = await response.json()
-  return (data || []).map((r: any) => ({
-    id: r.id,
-    name: r.name,
-    latitude: r.latitude,
-    longitude: r.longitude,
-  }))
-}
-
-export async function fetchCareers(params?: {
-  category?: string
-  limit?: number
-}): Promise<Career[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/careers`, window.location.origin)
-  if (params?.category) url.searchParams.append('category', params.category)
-  if (params?.limit) url.searchParams.append('limit', params.limit.toString())
-
-  const response = await fetch(url.toString())
-  if (!response.ok) {
-    console.error('Failed to fetch careers')
-    throw new Error('Failed to fetch careers')
-  }
-
-  return response.json()
-}
-
-export async function fetchCareerCategories(): Promise<string[]> {
-  const url = new URL(`${API_BASE_URL}/api/data/careers/categories`, window.location.origin)
-  const response = await fetch(url.toString())
-  if (!response.ok) {
-    console.error('Failed to fetch career categories')
-    throw new Error('Failed to fetch career categories')
-  }
-  return response.json()
 }
 
 export async function fetchDirections(params: {
@@ -208,16 +174,62 @@ export interface ChatMessage {
   content: string
 }
 
+// 브라우저 로컬 스토리지에서 세션 ID를 가져오거나 없으면 새로 생성 (2시간 만료)
+export function getOrCreateSessionId(): string {
+  const SESSION_KEY = 'induck_session_id'
+  const TIMESTAMP_KEY = 'induck_session_timestamp'
+  const EXPIRATION_MS = 2 * 60 * 60 * 1000 // 2시간
+
+  let sessionId = localStorage.getItem(SESSION_KEY)
+  const timestampStr = localStorage.getItem(TIMESTAMP_KEY)
+  const now = Date.now()
+
+  // 세션이 없거나 만료된 경우 새로 생성
+  if (!sessionId || !timestampStr || (now - parseInt(timestampStr, 10) > EXPIRATION_MS)) {
+    sessionId = crypto.randomUUID()
+    localStorage.setItem(SESSION_KEY, sessionId)
+    localStorage.setItem(TIMESTAMP_KEY, now.toString())
+  } else {
+    // 세션이 유효하면 만료 시간 갱신 (선택적: 마지막 활동 기준 연장)
+    localStorage.setItem(TIMESTAMP_KEY, now.toString())
+  }
+
+  return sessionId
+}
+
+// 이전 대화 기록 불러오기 (Supabase 직접 조회)
+export async function fetchChatHistory(sessionId: string): Promise<ChatMessage[]> {
+  try {
+    const { data, error } = await supabase
+      .from('chat_history')
+      .select('role, content')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+
+    return (data || []).map((msg: any) => ({
+      role: msg.role === 'assistant' ? 'bot' : msg.role,
+      content: msg.content
+    }))
+  } catch (err) {
+    console.error('Failed to fetch chat history:', err)
+    return []
+  }
+}
+
 export async function sendMessage(
   messages: ChatMessage[],
   onUpdate?: (content: string) => void
 ): Promise<string> {
+  const sessionId = getOrCreateSessionId()
+  
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, session_id: sessionId }),
   })
 
   if (!response.ok) {

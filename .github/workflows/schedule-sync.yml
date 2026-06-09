@@ -1,0 +1,46 @@
+name: Schedule Data Sync
+
+on:
+  schedule:
+    # 매주 월요일 한국 시간 오전 9시 (UTC 00:00) - 학사일정은 자주 변하지 않으므로 주 1회
+    - cron: '0 0 * * 1'
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/services/crawler/schedule.py'
+      - 'backend/app/run_schedule_crawler.py'
+  workflow_dispatch:
+
+jobs:
+  run-schedule-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements-crawler.txt
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('backend/requirements-crawler.txt') }}
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements-crawler.txt
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: python -m playwright install chromium --with-deps
+      - name: Install Playwright Dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: python -m playwright install-deps chromium
+      - name: Execute Schedule Crawler
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          cd backend
+          python app/run_schedule_crawler.py

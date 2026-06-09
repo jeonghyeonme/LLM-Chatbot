@@ -32,11 +32,7 @@ jobs:
           cd backend
           pip install -r requirements-crawler.txt
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: python -m playwright install chromium --with-deps
-      - name: Install Playwright Dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: python -m playwright install-deps chromium
       - name: Execute Schedule Crawler
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

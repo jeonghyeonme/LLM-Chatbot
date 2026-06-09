@@ -32,15 +32,13 @@ jobs:
           cd backend
           pip install -r requirements-crawler.txt
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: python -m playwright install chromium --with-deps
-      - name: Install Playwright Dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: python -m playwright install-deps chromium
       - name: Execute Career Crawler
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          CAMPUS_ID: ${{ secrets.CAMPUS_ID }}
+          CAMPUS_PW: ${{ secrets.CAMPUS_PW }}
         run: |
           cd backend
           python app/run_career_crawler.py

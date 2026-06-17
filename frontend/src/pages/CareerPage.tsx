@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
-import { Briefcase, Building, ExternalLink, Search, TrendingUp, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Briefcase, Building, ExternalLink, TrendingUp, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Career {

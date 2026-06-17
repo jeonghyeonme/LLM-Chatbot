@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
-import { Briefcase, Building, ExternalLink, TrendingUp, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Briefcase, Building, ExternalLink, TrendingUp, Calendar, Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Career {
@@ -13,6 +13,7 @@ interface Career {
 
 const CareerPage: React.FC = () => {
   const [activeDept, setActiveDept] = useState('전체');
+  const [searchQuery, setSearchQuery] = useState('');
   const [careers, setCareers] = useState<Career[]>([]);
   const [departments, setDepartments] = useState<string[]>(['전체']);
   const [loading, setLoading] = useState(true);
@@ -94,6 +95,13 @@ const CareerPage: React.FC = () => {
     loadCareers();
   }, [activeDept]);
 
+  // 검색 필터링 로직
+  const filteredCareers = careers.filter(career => {
+    const cleanQuery = searchQuery.replace(/\s+/g, '').toLowerCase();
+    const cleanTitle = (career.title || '').replace(/\s+/g, '').toLowerCase();
+    return cleanTitle.includes(cleanQuery);
+  });
+
   return (
     <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
       <Header />
@@ -109,9 +117,21 @@ const CareerPage: React.FC = () => {
               <p className="text-sm text-gray-500 mt-1">각 학과별 최신 채용 공고를 확인하세요.</p>
             </div>
             
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-inha-border shadow-sm">
-              <TrendingUp className="w-4 h-4 text-inha-blue" />
-              <span className="text-sm font-bold text-gray-700">전체 공고 <span className="text-inha-blue ml-1">{careers.length}건</span></span>
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                  type="text" 
+                  placeholder="취업 정보 검색..."
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-inha-border rounded-xl focus:outline-none focus:ring-2 focus:ring-inha-blue/20 focus:border-inha-blue transition-all text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-inha-border shadow-sm whitespace-nowrap">
+                <TrendingUp className="w-4 h-4 text-inha-blue" />
+                <span className="text-sm font-bold text-gray-700">검색 결과 <span className="text-inha-blue ml-1">{filteredCareers.length}건</span></span>
+              </div>
             </div>
           </div>
 
@@ -169,9 +189,9 @@ const CareerPage: React.FC = () => {
                 <Loader2 className="w-10 h-10 animate-spin text-inha-blue" />
                 <p className="font-medium">취업 정보를 불러오는 중입니다...</p>
               </div>
-            ) : careers.length > 0 ? (
+            ) : filteredCareers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {careers.map(job => (
+                {filteredCareers.map(job => (
                   <div key={job.id} className="bg-white rounded-inha-card border border-inha-border p-6 hover:shadow-lg hover:border-inha-blue/30 transition-all group flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start mb-4">

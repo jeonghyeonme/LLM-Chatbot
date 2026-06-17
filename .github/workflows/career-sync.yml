@@ -37,6 +37,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CAMPUS_ID: ${{ secrets.CAMPUS_ID }}
           CAMPUS_PW: ${{ secrets.CAMPUS_PW }}
           PYTHONUNBUFFERED: 1

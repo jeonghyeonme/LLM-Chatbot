@@ -6,3 +6,5 @@ requests
 supabase
 pydantic-settings
 python-dotenv
+google-generativeai
+langchain-google-genai

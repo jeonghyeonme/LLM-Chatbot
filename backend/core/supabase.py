@@ -1,5 +1,6 @@
 from supabase import create_client, Client
 from core.config import settings
+from core.embedding import embedding_service
 from typing import List, Dict, Optional
 
 url: str = settings.SUPABASE_URL
@@ -56,12 +57,25 @@ class SupabaseService:
     @staticmethod
     def upsert_notices(notices: List[Dict]):
         """
-        공지사항 데이터를 업서트합니다.
+        공지사항 데이터를 업서트합니다. 임베딩이 없으면 자동으로 생성합니다.
         """
+        import time
         if not supabase or not notices:
             return None
 
         try:
+            for notice in notices:
+                if "embedding" not in notice or not notice["embedding"]:
+                    # 제목과 본문을 조합하여 임베딩 생성
+                    text_to_embed = f"{notice['title']}\n{notice.get('content', '')}"
+                    notice["embedding"] = embedding_service.get_embedding(text_to_embed)
+                    # API 호출 제한(RPM)을 피하기 위해 짧은 지연 시간 추가
+                    if notice["embedding"]:
+                        print(f"      ✅ 임베딩 생성 완료: {notice['title'][:20]}...")
+                        time.sleep(1) 
+                    else:
+                        print(f"      ⚠️ 임베딩 생성 실패: {notice['title'][:20]}...")
+
             response = supabase.table("notices").upsert(
                 notices,
                 on_conflict="category,external_id"
@@ -74,12 +88,23 @@ class SupabaseService:
     @staticmethod
     def upsert_careers(careers: List[Dict]):
         """
-        취업 및 추천채용 데이터를 업서트합니다.
+        취업 정보를 업서트합니다. 임베딩이 없으면 자동으로 생성합니다.
         """
+        import time
         if not supabase or not careers:
             return None
 
         try:
+            for career in careers:
+                if "embedding" not in career or not career["embedding"]:
+                    text_to_embed = f"{career['title']}\n{career.get('content', '')}"
+                    career["embedding"] = embedding_service.get_embedding(text_to_embed)
+                    if career["embedding"]:
+                        print(f"      ✅ 임베딩 생성 완료: {career['title'][:20]}...")
+                        time.sleep(1)
+                    else:
+                        print(f"      ⚠️ 임베딩 생성 실패: {career['title'][:20]}...")
+
             response = supabase.table("careers").upsert(
                 careers,
                 on_conflict="category,external_id"
@@ -187,33 +212,66 @@ class SupabaseService:
     @staticmethod
     def search_notices(keyword: str, limit: int = 5):
         """
-        공지사항을 키워드로 검색합니다. (제목 또는 본문)
+        공지사항을 벡터 유사도 검색(Semantic Search)을 통해 조회합니다.
         """
         if not supabase or not keyword:
             return []
         
         try:
-            # 제목 또는 본문에 키워드가 포함된 데이터 검색
-            response = supabase.table("notices").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+            # 1. 검색어의 임베딩 생성
+            query_embedding = embedding_service.get_query_embedding(keyword)
+            if not query_embedding:
+                # 임베딩 실패 시 기존 키워드 검색으로 폴백
+                response = supabase.table("notices").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+                return response.data
+
+            # 2. Supabase RPC 함수 호출 (벡터 유사도 검색)
+            response = supabase.rpc("match_notices", {
+                "query_embedding": query_embedding,
+                "match_threshold": 0.3, # 유사도 임계값
+                "match_count": limit
+            }).execute()
+            
             return response.data
         except Exception as e:
-            print(f"Error searching notices: {e}")
-            return []
+            print(f"Error searching notices with vector: {e}")
+            # 에러 발생 시 키워드 검색으로 폴백
+            try:
+                response = supabase.table("notices").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+                return response.data
+            except:
+                return []
 
     @staticmethod
     def search_careers(keyword: str, limit: int = 5):
         """
-        취업 정보를 키워드로 검색합니다. (제목 또는 본문)
+        취업 정보를 벡터 유사도 검색(Semantic Search)을 통해 조회합니다.
         """
         if not supabase or not keyword:
             return []
         
         try:
-            response = supabase.table("careers").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+            # 1. 검색어의 임베딩 생성
+            query_embedding = embedding_service.get_query_embedding(keyword)
+            if not query_embedding:
+                response = supabase.table("careers").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+                return response.data
+
+            # 2. Supabase RPC 함수 호출 (벡터 유사도 검색)
+            response = supabase.rpc("match_careers", {
+                "query_embedding": query_embedding,
+                "match_threshold": 0.3,
+                "match_count": limit
+            }).execute()
+            
             return response.data
         except Exception as e:
-            print(f"Error searching careers: {e}")
-            return []
+            print(f"Error searching careers with vector: {e}")
+            try:
+                response = supabase.table("careers").select("*").or_(f"title.ilike.%{keyword}%,content.ilike.%{keyword}%").order("date", desc=True).limit(limit).execute()
+                return response.data
+            except:
+                return []
 
     @staticmethod
     def save_chat_message(session_id: str, role: str, content: str):
@@ -243,9 +301,6 @@ class SupabaseService:
             return []
             
         try:
-            # 최근 대화를 가져오기 위해 내림차순 정렬 후 다시 오름차순으로 뒤집어야 하지만,
-            # 여기서는 클라이언트가 전체 컨텍스트를 주는 구조일 경우 보조적인 용도로 사용됨.
-            # 서버에서 컨텍스트를 주입하려면 오름차순으로 가져오는 것이 편함.
             response = supabase.table("chat_history").select("*").eq("session_id", session_id).order("created_at", desc=False).limit(limit).execute()
             return response.data
         except Exception as e:

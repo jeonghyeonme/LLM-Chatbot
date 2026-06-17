@@ -166,7 +166,7 @@ export async function fetchDirections(params: {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Chat API Functions
+// Chat API Functions (Client-Side Session Management)
 // ──────────────────────────────────────────────────────────────────────────────
 
 export interface ChatMessage {
@@ -174,15 +174,64 @@ export interface ChatMessage {
   content: string
 }
 
-// 대화 기록 불러오기 비활성화 (스테이트리스 방식으로 변경)
-export async function fetchChatHistory(_sessionId: string): Promise<ChatMessage[]> {
-  return []
+const STORAGE_KEY = 'induck_chat_history'
+const LAST_ACTIVITY_KEY = 'induck_last_activity'
+const SESSION_TTL = 2 * 60 * 60 * 1000 // 2시간 (밀리초)
+
+/**
+ * 대화 내역을 로컬 스토리지에 저장하고 활동 시간을 갱신합니다.
+ */
+export function saveChatHistoryToLocal(messages: ChatMessage[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString())
+  } catch (err) {
+    console.error('Failed to save chat history:', err)
+  }
+}
+
+/**
+ * 로컬 스토리지에서 대화 내역을 불러옵니다. 2시간이 지났으면 초기화합니다.
+ */
+export function loadChatHistoryFromLocal(): ChatMessage[] {
+  try {
+    const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY)
+    const now = Date.now()
+
+    if (lastActivity && now - parseInt(lastActivity, 10) > SESSION_TTL) {
+      console.log('Session expired. Clearing chat history.')
+      clearChatHistory()
+      return []
+    }
+
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch (err) {
+    console.error('Failed to load chat history:', err)
+    return []
+  }
+}
+
+/**
+ * 세션 데이터를 강제로 삭제합니다.
+ */
+export function clearChatHistory() {
+  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(LAST_ACTIVITY_KEY)
+}
+
+// 기존 fetchChatHistory는 로컬 스토리지 버전으로 대체
+export async function fetchChatHistory(_sessionId?: string): Promise<ChatMessage[]> {
+  return loadChatHistoryFromLocal()
 }
 
 export async function sendMessage(
   messages: ChatMessage[],
   onUpdate?: (content: string) => void
 ): Promise<string> {
+  // 요청 시마다 활동 시간 갱신 (TTL 연장)
+  localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString())
+
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: {

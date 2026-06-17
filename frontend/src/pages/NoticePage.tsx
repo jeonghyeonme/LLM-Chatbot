@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
-import { Search, Bell, ChevronRight, Loader2, ExternalLink, ChevronLeft } from 'lucide-react';
+import { Search, Bell, ChevronRight, Loader2, ChevronLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Notice {

@@ -106,26 +106,7 @@ const CareerPage: React.FC = () => {
                 <Briefcase className="text-inha-blue" />
                 취업 정보 센터
               </h1>
-<<<<<<< Updated upstream
-              <p className="text-blue-100 text-lg max-w-2xl leading-relaxed">
-                각 학과 홈페이지에 게시된 최신 취업처 정보와 채용 공고를 한눈에 확인하세요.<br />
-                인하덕이가 여러분의 꿈을 응원합니다!
-              </p>
-              
-              <div className="flex flex-wrap gap-4 mt-8">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200">전체 공고</p>
-                    <p className="text-xl font-bold">{careers.length}건</p>
-                  </div>
-                </div>
-              </div>
-=======
               <p className="text-sm text-gray-500 mt-1">각 학과별 최신 채용 공고를 확인하세요.</p>
->>>>>>> Stashed changes
             </div>
             
             <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-inha-border shadow-sm">

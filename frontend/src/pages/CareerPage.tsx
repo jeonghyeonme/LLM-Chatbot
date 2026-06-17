@@ -18,12 +18,10 @@ const CareerPage: React.FC = () => {
   const [departments, setDepartments] = useState<string[]>(['전체']);
   const [loading, setLoading] = useState(true);
 
-  /* 필터 메뉴 스크롤 제어를 위한 Ref 및 상태 */
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(false)
 
-  /* 스크롤 상태 체크 (화살표 표시 여부 결정) */
   const checkScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
@@ -38,7 +36,6 @@ const CareerPage: React.FC = () => {
     return () => window.removeEventListener('resize', checkScroll)
   }, [departments, loading])
 
-  /* 양 끝으로 부드러운 스크롤 이동 */
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const { clientWidth } = scrollRef.current
@@ -50,16 +47,11 @@ const CareerPage: React.FC = () => {
     }
   }
 
-  // 학과 카테고리 로드 (Supabase 직접 접근)
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const { data, error } = await supabase
-          .from('careers')
-          .select('category');
-        
+        const { data, error } = await supabase.from('careers').select('category');
         if (error) throw error;
-        
         if (data) {
           const uniqueCats = Array.from(new Set(data.map(item => item.category)));
           setDepartments(['전체', ...uniqueCats.sort()]);
@@ -71,17 +63,12 @@ const CareerPage: React.FC = () => {
     loadCategories();
   }, []);
 
-  // 공고 데이터 로드 (Supabase 직접 접근)
   useEffect(() => {
     const loadCareers = async () => {
       setLoading(true);
       try {
         let query = supabase.from('careers').select('*').order('date', { ascending: false });
-        
-        if (activeDept !== '전체') {
-          query = query.eq('category', activeDept);
-        }
-
+        if (activeDept !== '전체') query = query.eq('category', activeDept);
         const { data, error } = await query.limit(50);
         if (error) throw error;
         setCareers(data || []);
@@ -91,19 +78,20 @@ const CareerPage: React.FC = () => {
         setLoading(false);
       }
     };
-
     loadCareers();
   }, [activeDept]);
 
-  // 검색 필터링 로직
+  // 통합 검색 엔진 (제목 + 학과명)
   const filteredCareers = careers.filter(career => {
     const cleanQuery = searchQuery.replace(/\s+/g, '').toLowerCase();
     const cleanTitle = (career.title || '').replace(/\s+/g, '').toLowerCase();
-    return cleanTitle.includes(cleanQuery);
+    const cleanDept = (career.category || '').replace(/\s+/g, '').toLowerCase();
+    
+    return cleanTitle.includes(cleanQuery) || cleanDept.includes(cleanQuery);
   });
 
   return (
-    <div className="min-h-screen bg-inha-bg flex flex-col font-sans">
+    <div className="min-h-screen bg-inha-bg flex flex-col font-sans text-inha-text-main">
       <Header />
       
       <main className="flex-1 pt-24 pb-12 px-6 md:px-12 flex flex-col items-center">
@@ -135,54 +123,26 @@ const CareerPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 학과 필터 - 가로 스크롤 버튼 형식 (화살표 포함) */}
           <div className="relative group mb-8">
-            {/* 좌측 화살표 */}
             {showLeftArrow && (
-              <button 
-                onClick={() => scroll('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm border border-inha-border rounded-full shadow-sm text-inha-blue md:hover:bg-gray-50 transition-all"
-              >
+              <button onClick={() => scroll('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm border border-inha-border rounded-full shadow-sm text-inha-blue">
                 <ChevronLeft size={18} />
               </button>
             )}
-
-            <div 
-              ref={scrollRef}
-              onScroll={checkScroll}
-              className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth"
-            >
+            <div ref={scrollRef} onScroll={checkScroll} className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
               {departments.map(dept => (
-                <button
-                  key={dept}
-                  onClick={() => setActiveDept(dept)}
-                  className={`px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shadow-sm ${
-                    activeDept === dept 
-                      ? 'bg-inha-blue text-white shadow-md' 
-                      : 'bg-white text-gray-600 border border-inha-border hover:border-inha-blue/30'
-                  }`}
-                >
+                <button key={dept} onClick={() => setActiveDept(dept)} className={`px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shadow-sm ${activeDept === dept ? 'bg-inha-blue text-white shadow-md' : 'bg-white text-gray-600 border border-inha-border hover:border-inha-blue/30'}`}>
                   {dept}
                 </button>
               ))}
             </div>
-
-            {/* 우측 화살표 */}
             {showRightArrow && (
-              <button 
-                onClick={() => scroll('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm border border-inha-border rounded-full shadow-sm text-inha-blue md:hover:bg-gray-50 transition-all"
-              >
+              <button onClick={() => scroll('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm border border-inha-border rounded-full shadow-sm text-inha-blue">
                 <ChevronRight size={18} />
               </button>
             )}
-
-            {/* 좌우 그라데이션 마스크 */}
-            <div className={`absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-inha-bg to-transparent pointer-events-none transition-opacity duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
-            <div className={`absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-inha-bg to-transparent pointer-events-none transition-opacity duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} />
           </div>
 
-          {/* 메인: 채용 공고 리스트 */}
           <div className="space-y-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-4">
@@ -198,44 +158,21 @@ const CareerPage: React.FC = () => {
                         <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-inha-blue/5 group-hover:border-inha-blue/10 transition-colors">
                           <Building className="w-6 h-6 text-gray-400 group-hover:text-inha-blue" />
                         </div>
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-100 text-blue-600">
-                          {job.category}
-                        </span>
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-100 text-blue-600">{job.category}</span>
                       </div>
-                      
-                      <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-inha-blue transition-colors line-clamp-2 min-h-[3.5rem] leading-snug">
-                        {job.title}
-                      </h3>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-inha-blue transition-colors line-clamp-2 min-h-[3.5rem] leading-snug">{job.title}</h3>
                     </div>
-
                     <div className="pt-4 border-t border-gray-50">
                       <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          게시일: {job.date}
-                        </div>
+                        <div className="flex items-center gap-1"><Calendar className="w-3 h-3" />게시일: {job.date}</div>
                       </div>
-                      <a 
-                        href={job.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-inha-bg text-inha-blue font-bold rounded-xl group-hover:bg-inha-blue group-hover:text-white transition-all shadow-sm"
-                      >
-                        상세보기
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                      <a href={job.url} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 py-3 bg-inha-bg text-inha-blue font-bold rounded-xl group-hover:bg-inha-blue group-hover:text-white transition-all shadow-sm">상세보기 <ExternalLink className="w-4 h-4" /></a>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-inha-card border-2 border-dashed border-inha-border py-20 flex flex-col items-center justify-center text-gray-400 gap-4 text-center px-6">
-                <Briefcase className="w-12 h-12 opacity-20" />
-                <div>
-                  <p className="text-lg font-bold text-gray-500">등록된 채용 공고가 없습니다.</p>
-                  <p className="text-sm mt-1">다른 학과를 선택하거나 나중에 다시 확인해 주세요.</p>
-                </div>
-              </div>
+              <div className="py-20 text-center text-gray-400">검색 결과가 없습니다.</div>
             )}
           </div>
         </div>
